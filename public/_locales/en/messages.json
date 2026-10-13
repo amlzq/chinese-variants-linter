@@ -1,0 +1,10 @@
+{
+    "extName": {
+        "message": "Chinese Variants Linter",
+        "description": "Extension name shown in the browser toolbar, extensions page, and Web Store."
+    },
+    "extDescription": {
+        "message": "Detects inconsistent Chinese usage in web input fields and offers single-item replacement suggestions.",
+        "description": "Extension description shown on the extensions page and Web Store listing."
+    }
+}

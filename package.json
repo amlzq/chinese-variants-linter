@@ -1,8 +1,16 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "chinese-variants-linter",
+  "description": "chinese variants linter",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": [
+    "browser-extension",
+    "wxt",
+    "chinese",
+    "opencc",
+    "linter"
+  ],
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -12,9 +20,11 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "test": "vitest run",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "opencc-js": "^1.4.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -22,7 +32,9 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",
+    "sharp": "^0.35.3",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.9",
     "wxt": "^0.20.27"
   }
 }

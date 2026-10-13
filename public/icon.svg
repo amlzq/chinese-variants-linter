@@ -1,0 +1,52 @@
+<svg width="512" height="512"
+     viewBox="0 0 512 512"
+     fill="none"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Oracle bone script 文 -->
+  <g fill="#176B8A" transform="translate(-64,-64) scale(1.25)">
+
+    <!-- Top mark / head -->
+    <path d="
+      M256 72
+      C242 105 226 130 210 150
+      C232 142 278 142 302 150
+      C282 128 268 100 256 72Z"/>
+
+    <!-- Left upper stroke -->
+    <path d="
+      M235 155
+      C220 190 195 225 160 260
+      L180 275
+      C215 250 245 215 260 170
+      Z"/>
+
+    <!-- Right upper stroke -->
+    <path d="
+      M276 160
+      C315 200 350 235 370 270
+      L345 280
+      C320 245 285 215 260 180
+      Z"/>
+
+    <!-- Central crossing stroke -->
+    <path d="
+      M248 160
+      C252 220 250 300 235 365
+      L260 390
+      C275 300 278 220 270 160
+      Z"/>
+
+    <!-- Lower spreading stroke -->
+    <path d="
+      M235 285
+      C205 330 165 365 120 405
+      C180 390 235 360 270 320
+      C310 360 360 390 410 405
+      C360 355 315 320 275 280
+      Z"/>
+
+  </g>
+
+
+</svg>
