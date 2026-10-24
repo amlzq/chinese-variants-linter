@@ -24,8 +24,8 @@
     <rect x="31" y="106" width="284" height="306" rx="32" fill="url(#edge)"/>
     <rect x="39" y="112" width="268" height="292" rx="26" fill="url(#paper)"/>
     <!-- Mi-grid: a traditional practice grid for centring Chinese characters. -->
-    <rect x="64" y="150" width="218" height="218" rx="12" stroke="#91BDCB" stroke-width="3" opacity=".66"/>
-    <path d="M173 150V368M64 259H282M64 150L282 368M282 150L64 368" stroke="#91BDCB" stroke-width="3" stroke-linecap="round" opacity=".52"/>
+    <rect x="64" y="150" width="218" height="218" rx="12" stroke="#176B8A" stroke-width="3" opacity=".30"/>
+    <path d="M173 150V368M64 259H282M64 150L282 368M282 150L64 368" stroke="#176B8A" stroke-width="3" stroke-linecap="round" opacity=".24"/>
     <!-- Actual black Kaiti character, deliberately large for a legible toolbar mark. -->
     <text x="173" y="322" text-anchor="middle" fill="#000000" font-family="Kaiti SC, STKaiti, KaiTi, BiauKai, serif" font-size="202" font-weight="400">漢</text>
   </g>
@@ -34,8 +34,8 @@
   <g filter="url(#front-card-shadow)" transform="rotate(7 330 286)">
     <rect x="184" y="130" width="292" height="314" rx="34" fill="url(#edge)"/>
     <rect x="192" y="136" width="276" height="300" rx="28" fill="url(#paper)"/>
-    <rect x="218" y="174" width="224" height="224" rx="12" stroke="#91BDCB" stroke-width="3" opacity=".66"/>
-    <path d="M330 174V398M218 286H442M218 174L442 398M442 174L218 398" stroke="#91BDCB" stroke-width="3" stroke-linecap="round" opacity=".52"/>
+    <rect x="218" y="174" width="224" height="224" rx="12" stroke="#176B8A" stroke-width="3" opacity=".30"/>
+    <path d="M330 174V398M218 286H442M218 174L442 398M442 174L218 398" stroke="#176B8A" stroke-width="3" stroke-linecap="round" opacity=".24"/>
     <text x="330" y="351" text-anchor="middle" fill="#000000" font-family="Kaiti SC, STKaiti, KaiTi, BiauKai, serif" font-size="198" font-weight="400">汉</text>
   </g>
 </svg>
