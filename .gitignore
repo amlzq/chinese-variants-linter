@@ -25,4 +25,6 @@ web-ext.config.ts
 *.sln
 *.sw?
 
-/docs
+docs/
+
+coverage/
