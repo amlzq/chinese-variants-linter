@@ -18,7 +18,7 @@ import {
   type SupportedEditable,
 } from "../src/core/apply";
 import { detectText } from "../src/core/detect";
-import { getSettings, isSiteEnabled } from "../src/core/storage";
+import { getSettings, isSiteEnabled, STORAGE_KEY } from "../src/core/storage";
 import { containsCjk } from "../src/shared/text";
 import { detectDefaultRegion, setRegion } from "../src/shared/locale";
 import type { ExtensionSettings, Issue, ShortcutAction } from "../src/shared/types";
@@ -535,13 +535,19 @@ export default defineContentScript({
     document.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("resize", onScrollOrResize);
 
-    browser.runtime.onMessage.addListener((message) => {
-      if (message?.type === "settings/changed") {
-        settings = message.settings as ExtensionSettings;
+    // 监听持久化设置，而非由后台脚本枚举并向所有标签页发消息。这样既能让
+    // 每个已注入的页面及时更新，也不需要 `tabs` 的全标签页读取权限。
+    browser.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "local" || !changes[STORAGE_KEY]) {
+        return;
+      }
+
+      void getSettings().then((nextSettings) => {
+        settings = nextSettings;
         setRegion(detectDefaultRegion());
         void detectActiveElement(true);
         evaluateSelection();
-      }
+      });
     });
   },
 });

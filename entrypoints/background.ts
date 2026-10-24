@@ -15,26 +15,6 @@ async function getActiveHostname(): Promise<string | null> {
   }
 }
 
-async function broadcastSettingsChanged(): Promise<void> {
-  const settings = await getSettings();
-  const tabs = await browser.tabs.query({});
-
-  await Promise.all(
-    tabs
-      .filter((tab) => typeof tab.id === "number")
-      .map(async (tab) => {
-        try {
-          await browser.tabs.sendMessage(tab.id as number, {
-            type: "settings/changed",
-            settings,
-          });
-        } catch {
-          // Ignore tabs without a matching content script.
-        }
-      }),
-  );
-}
-
 async function getPopupState(): Promise<PopupState> {
   const settings = await getSettings();
   const hostname = await getActiveHostname();
@@ -62,17 +42,9 @@ export default defineBackground(() => {
       case "popup/get-state":
         return getPopupState();
       case "settings/update":
-        return updateSettings(message.patch).then(async (settings) => {
-          await broadcastSettingsChanged();
-          return settings;
-        });
+        return updateSettings(message.patch);
       case "site/toggle":
-        return setSiteEnabled(message.hostname, message.enabled).then(async (settings) => {
-          await broadcastSettingsChanged();
-          return settings;
-        });
-      case "settings/changed":
-        return broadcastSettingsChanged();
+        return setSiteEnabled(message.hostname, message.enabled);
       default:
         return undefined;
     }

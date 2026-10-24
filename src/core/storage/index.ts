@@ -7,7 +7,7 @@ import {
   type UserDictionary,
   type VariantCode,
 } from "../../shared/types";
-const STORAGE_KEY = "extension-settings";
+export const STORAGE_KEY = "extension-settings";
 
 export const VARIANT_LABELS: Record<VariantCode, string> = {
   "zh-CN": "简体中文",
