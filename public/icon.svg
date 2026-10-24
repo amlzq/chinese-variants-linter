@@ -1,52 +1,41 @@
-<svg width="512" height="512"
-     viewBox="0 0 512 512"
-     fill="none"
-     xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- A compact mark for Chinese-variant proofreading: two layered paper cards. -->
+  <defs>
+    <linearGradient id="paper" x1="92" y1="86" x2="426" y2="444" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset=".55" stop-color="#F6FBFD"/>
+      <stop offset="1" stop-color="#DDEEF3"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="93" y1="130" x2="326" y2="397" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E2E8F0"/>
+      <stop offset=".45" stop-color="#CBD5E1"/>
+      <stop offset="1" stop-color="#94A3B8"/>
+    </linearGradient>
+    <filter id="back-card-shadow" x="0" y="55" width="358" height="394" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="-4" dy="11" stdDeviation="10" flood-color="#0F172A" flood-opacity=".18"/>
+    </filter>
+    <filter id="front-card-shadow" x="152" y="79" width="346" height="392" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="4" dy="10" stdDeviation="9" flood-color="#0F172A" flood-opacity=".20"/>
+    </filter>
+  </defs>
 
-  <!-- Oracle bone script 文 -->
-  <g fill="#176B8A" transform="translate(-64,-64) scale(1.25)">
-
-    <!-- Top mark / head -->
-    <path d="
-      M256 72
-      C242 105 226 130 210 150
-      C232 142 278 142 302 150
-      C282 128 268 100 256 72Z"/>
-
-    <!-- Left upper stroke -->
-    <path d="
-      M235 155
-      C220 190 195 225 160 260
-      L180 275
-      C215 250 245 215 260 170
-      Z"/>
-
-    <!-- Right upper stroke -->
-    <path d="
-      M276 160
-      C315 200 350 235 370 270
-      L345 280
-      C320 245 285 215 260 180
-      Z"/>
-
-    <!-- Central crossing stroke -->
-    <path d="
-      M248 160
-      C252 220 250 300 235 365
-      L260 390
-      C275 300 278 220 270 160
-      Z"/>
-
-    <!-- Lower spreading stroke -->
-    <path d="
-      M235 285
-      C205 330 165 365 120 405
-      C180 390 235 360 270 320
-      C310 360 360 390 410 405
-      C360 355 315 320 275 280
-      Z"/>
-
+  <!-- Two thin paper cards, offset like a freshly cut deck. -->
+  <g filter="url(#back-card-shadow)" transform="rotate(-12 173 262)">
+    <rect x="31" y="106" width="284" height="306" rx="32" fill="url(#edge)"/>
+    <rect x="39" y="112" width="268" height="292" rx="26" fill="url(#paper)"/>
+    <!-- Mi-grid: a traditional practice grid for centring Chinese characters. -->
+    <rect x="64" y="150" width="218" height="218" rx="12" stroke="#91BDCB" stroke-width="3" opacity=".66"/>
+    <path d="M173 150V368M64 259H282M64 150L282 368M282 150L64 368" stroke="#91BDCB" stroke-width="3" stroke-linecap="round" opacity=".52"/>
+    <!-- Actual black Kaiti character, deliberately large for a legible toolbar mark. -->
+    <text x="173" y="322" text-anchor="middle" fill="#000000" font-family="Kaiti SC, STKaiti, KaiTi, BiauKai, serif" font-size="202" font-weight="400">漢</text>
   </g>
 
-
+  <!-- The foreground card is advanced slightly, while remaining a thin sheet of paper. -->
+  <g filter="url(#front-card-shadow)" transform="rotate(7 330 286)">
+    <rect x="184" y="130" width="292" height="314" rx="34" fill="url(#edge)"/>
+    <rect x="192" y="136" width="276" height="300" rx="28" fill="url(#paper)"/>
+    <rect x="218" y="174" width="224" height="224" rx="12" stroke="#91BDCB" stroke-width="3" opacity=".66"/>
+    <path d="M330 174V398M218 286H442M218 174L442 398M442 174L218 398" stroke="#91BDCB" stroke-width="3" stroke-linecap="round" opacity=".52"/>
+    <text x="330" y="351" text-anchor="middle" fill="#000000" font-family="Kaiti SC, STKaiti, KaiTi, BiauKai, serif" font-size="198" font-weight="400">汉</text>
+  </g>
 </svg>

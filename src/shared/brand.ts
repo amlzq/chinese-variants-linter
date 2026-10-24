@@ -1,7 +1,7 @@
 /**
  * 统一品牌图标资源。
  *
- * 唯一的图标来源是 `public/icon.svg`（黑底白「文」直角方块）：
+ * 唯一的图标来源是 `public/icon.svg`（双字形卡片与校对勾）：
  * - 工具栏图标：由该 SVG 经构建 / 导出流程生成 PNG，写入 manifest 的 `icons`。
  * - 页内视图（复查面板 logo、浮动启动器状态图标）：通过 `browser.runtime.getURL`
  *   直接加载同一文件（需在 manifest 的 `web_accessible_resources` 中声明 `icon.svg`），
