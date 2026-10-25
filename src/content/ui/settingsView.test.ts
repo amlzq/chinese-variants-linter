@@ -167,6 +167,25 @@ describe("渲染设置项", () => {
     expect(site.checked).toBe(true);
   });
 
+  it("全站点默认开关默认未勾选且位于站点开关上方", async () => {
+    await showSettingsView();
+    const defaultToggle = body().querySelector<HTMLInputElement>("input[data-default-site]")!;
+    expect(defaultToggle.checked).toBe(false);
+
+    const inputs = [...body().querySelectorAll<HTMLInputElement>("input[data-default-site], input[data-site]")];
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toBe(defaultToggle);
+  });
+
+  it("全站点默认开关勾选时渲染为开启", async () => {
+    getSettingsMock.mockResolvedValue(buildSettings({ defaultSiteEnabled: true }));
+    await showSettingsView();
+
+    expect(
+      body().querySelector<HTMLInputElement>("input[data-default-site]")!.checked,
+    ).toBe(true);
+  });
+
   it("展示允许词与强制替换规则", async () => {
     getSettingsMock.mockResolvedValue(
       buildSettings({
@@ -250,6 +269,16 @@ describe("设置项变更", () => {
     await flush();
 
     expect(toggleSite).toHaveBeenCalledWith(location.hostname, false);
+  });
+
+  it("切换全站点默认开关写入设置", async () => {
+    await showSettingsView();
+    const defaultToggle = body().querySelector<HTMLInputElement>("input[data-default-site]")!;
+    defaultToggle.checked = true;
+    defaultToggle.dispatchEvent(new Event("change"));
+    await flush();
+
+    expect(updateSettings).toHaveBeenCalledWith({ defaultSiteEnabled: true });
   });
 });
 

@@ -49,7 +49,9 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   enabled: true,
   defaultVariant: detectDefaultVariant(),
   detectionLevel: "standard",
-  // 空映射表示所有站点默认关闭检查，用户需在设置中按站点开启。
+  // 全站点默认关闭检查，用户可整体开启或按站点单独覆盖。
+  defaultSiteEnabled: false,
+  // 站点级显式开关；未出现的站点跟随 defaultSiteEnabled。
   siteEnabledMap: {},
   userDictionary: DEFAULT_USER_DICTIONARY,
   showOnSelection: true,
@@ -145,6 +147,7 @@ export function normalizeSettings(settings?: Partial<ExtensionSettings> | null):
     enabled: settings?.enabled ?? DEFAULT_SETTINGS.enabled,
     defaultVariant: settings?.defaultVariant ?? DEFAULT_SETTINGS.defaultVariant,
     detectionLevel: settings?.detectionLevel ?? DEFAULT_SETTINGS.detectionLevel,
+    defaultSiteEnabled: settings?.defaultSiteEnabled ?? DEFAULT_SETTINGS.defaultSiteEnabled,
     siteEnabledMap: settings?.siteEnabledMap ?? {},
     userDictionary: {
       allowTerms: normalizeAllowTerms(settings?.userDictionary),
@@ -215,9 +218,9 @@ export async function setSiteEnabled(
 
 export function isSiteEnabled(settings: ExtensionSettings, hostname: string | null): boolean {
   if (!hostname) {
-    return false;
+    return settings.defaultSiteEnabled;
   }
 
-  // 站点开关默认关闭：未显式开启的站点不执行检查，由用户按站点主动启用。
-  return settings.siteEnabledMap[hostname] ?? false;
+  // 站点级开关优先；未单独配置的站点跟随「全站点默认开启检查」。
+  return settings.siteEnabledMap[hostname] ?? settings.defaultSiteEnabled;
 }

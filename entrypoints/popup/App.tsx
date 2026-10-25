@@ -70,7 +70,7 @@ function App() {
           ...current,
           settings: next,
           siteEnabled: current.hostname
-            ? next.siteEnabledMap[current.hostname] ?? false
+            ? next.siteEnabledMap[current.hostname] ?? next.defaultSiteEnabled
             : current.siteEnabled,
         }
         : current,
@@ -239,6 +239,24 @@ function App() {
             <option value="standard">{t("level.standard")}</option>
             <option value="relaxed">{t("level.relaxed")}</option>
           </select>
+        </section>
+
+        <section className="cvl-settings-section">
+          <div className="cvl-settings-row">
+            <div className="cvl-settings-row-info">
+              <span className="cvl-settings-row-title">{t("settings.sites.defaultOn")}</span>
+            </div>
+            <label className="cvl-settings-toggle">
+              <input
+                type="checkbox"
+                checked={settings.defaultSiteEnabled}
+                onChange={(event) =>
+                  void updateSettings({ defaultSiteEnabled: event.target.checked })
+                }
+              />
+              <span className="cvl-settings-toggle-slider" />
+            </label>
+          </div>
         </section>
 
         {popupState.hostname ? (

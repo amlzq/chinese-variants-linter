@@ -255,9 +255,22 @@ function getSitesSection(): string {
   const s = currentSettings!;
   const hostname = location.hostname;
 
+  // 「全站点默认开启检查」位于站点开关上方，决定未单独配置站点的默认值。
+  const defaultRow = `
+      <div class="cvl-settings-row">
+        <div class="cvl-settings-row-info">
+          <span class="cvl-settings-row-title">${t("settings.sites.defaultOn")}</span>
+        </div>
+        <label class="cvl-settings-toggle">
+          <input type="checkbox" data-default-site ${s.defaultSiteEnabled ? "checked" : ""} />
+          <span class="cvl-settings-toggle-slider"></span>
+        </label>
+      </div>`;
+
   if (!hostname) {
     return `
       <section class="cvl-settings-section">
+        ${defaultRow}
         <p class="cvl-settings-empty">${t("settings.sites.unknown")}</p>
       </section>`;
   }
@@ -265,6 +278,7 @@ function getSitesSection(): string {
   const siteEnabled = isSiteEnabled(s, hostname);
   return `
     <section class="cvl-settings-section">
+      ${defaultRow}
       <div class="cvl-settings-row">
         <div class="cvl-settings-row-info">
           <span class="cvl-settings-row-title">${t("settings.sites.checkOn", { host: escapeHtml(hostname) })}</span>
@@ -434,6 +448,14 @@ function commitRecordedCombo(action: ShortcutAction): void {
 }
 
 function bindSiteEvents(body: HTMLElement): void {
+  body
+    .querySelectorAll<HTMLInputElement>("input[type='checkbox'][data-default-site]")
+    .forEach((input) => {
+      input.addEventListener("change", () => {
+        void updateSettings({ defaultSiteEnabled: input.checked });
+      });
+    });
+
   body.querySelectorAll<HTMLInputElement>("input[type='checkbox'][data-site]").forEach((input) => {
     input.addEventListener("change", () => {
       const site = input.dataset.site;

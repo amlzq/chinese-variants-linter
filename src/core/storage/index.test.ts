@@ -99,6 +99,11 @@ describe("normalizeSettings - 纵深防御", () => {
     expect(settings.userDictionary.forceReplaceRules).toEqual([]);
   });
 
+  it("缺少 defaultSiteEnabled 时默认为关闭", () => {
+    const settings = normalizeSettings({});
+    expect(settings.defaultSiteEnabled).toBe(false);
+  });
+
   it("缺少 shortcuts 时回退到默认快捷键", () => {
     const settings = normalizeSettings({});
     expect(settings.shortcuts.toggleEnabled).toEqual(DEFAULT_SETTINGS.shortcuts.toggleEnabled);
@@ -175,21 +180,27 @@ describe("mergeSettings", () => {
 });
 
 describe("isSiteEnabled", () => {
-  it("无 hostname 时视为关闭", () => {
+  it("无 hostname 时跟随全站点默认开关", () => {
     expect(isSiteEnabled(DEFAULT_SETTINGS, null)).toBe(false);
+    expect(isSiteEnabled({ ...DEFAULT_SETTINGS, defaultSiteEnabled: true }, null)).toBe(true);
   });
 
-  it("未记录的站点默认关闭", () => {
+  it("未记录的站点跟随全站点默认开关", () => {
     expect(isSiteEnabled(DEFAULT_SETTINGS, "unknown.com")).toBe(false);
+    expect(isSiteEnabled({ ...DEFAULT_SETTINGS, defaultSiteEnabled: true }, "unknown.com")).toBe(
+      true,
+    );
   });
 
-  it("仅显式开启的站点返回 true", () => {
+  it("站点级开关优先于全站点默认开关", () => {
     const settings: ExtensionSettings = {
       ...DEFAULT_SETTINGS,
+      defaultSiteEnabled: true,
       siteEnabledMap: { "off.com": false, "on.com": true },
     };
     expect(isSiteEnabled(settings, "off.com")).toBe(false);
     expect(isSiteEnabled(settings, "on.com")).toBe(true);
+    expect(isSiteEnabled(settings, "other.com")).toBe(true);
   });
 });
 

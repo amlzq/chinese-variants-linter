@@ -74,6 +74,8 @@ export interface ExtensionSettings {
     enabled: boolean;
     defaultVariant: VariantCode;
     detectionLevel: DetectionLevel;
+    // 全站点默认开启检查；未在 siteEnabledMap 中单独配置的站点跟随该开关。
+    defaultSiteEnabled: boolean;
     siteEnabledMap: Record<string, boolean>;
     userDictionary: UserDictionary;
     showOnSelection: boolean;
@@ -84,6 +86,7 @@ export interface ExtensionSettingsPatch {
     enabled?: boolean;
     defaultVariant?: VariantCode;
     detectionLevel?: DetectionLevel;
+    defaultSiteEnabled?: boolean;
     siteEnabledMap?: Record<string, boolean>;
     userDictionary?: {
         allowTerms?: Partial<Record<VariantCode, string[]>>;
