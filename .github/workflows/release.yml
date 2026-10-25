@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 打包并发布
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          # --generate-notes 需要与上一个 tag 比较，浅克隆会缺少历史。
+          fetch-depth: 0
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      # tag 必须与 package.json 版本一致，否则 zip 文件名与 tag 对不上。
+      - name: 校验版本一致
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag $GITHUB_REF_NAME 与 package.json 版本 $pkg 不一致"
+            exit 1
+          fi
+
+      - name: 类型检查
+        run: npm run compile
+
+      - name: 单元测试
+        run: npm test
+
+      # 产出 chrome、firefox 与 firefox sources 三个包，后者供 AMO 审核。
+      - name: 打包 Chrome 与 Firefox
+        run: |
+          npm run zip
+          npm run zip:firefox
+
+      - name: 创建 GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" .output/*.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag

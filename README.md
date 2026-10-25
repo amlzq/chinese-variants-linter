@@ -63,6 +63,28 @@ npm test
 npm run compile
 ```
 
+## 发版流程
+
+版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，变更记录维护在 [CHANGELOG.md](CHANGELOG.md)。
+
+1. 更新 `package.json` 的 `version`，并在 `CHANGELOG.md` 中补充对应版本的变更条目。
+2. 提交改动后打 tag 并推送：
+
+   ```bash
+   git commit -am "chore(release): v0.1.0"
+   git tag v0.1.0
+   git push origin main --tags
+   ```
+
+3. GitHub Actions 的 `Release` 工作流会自动校验 tag 与 `package.json` 版本一致，执行类型检查与单元测试，打包 Chrome 与 Firefox 产物，然后创建 GitHub Release 并附上三个压缩包：
+
+   - `chinese-variants-linter-<version>-chrome.zip`：提交至 Chrome Web Store 与 Edge 加载项
+   - `chinese-variants-linter-<version>-firefox.zip`：提交至 Firefox Add-ons
+   - `chinese-variants-linter-<version>-sources.zip`：Firefox Add-ons 审核所需的源码包
+
+   tag 与版本号不一致时工作流会直接失败，不会创建 Release。
+4. 日常提交由 `CI` 工作流执行类型检查、单元测试与双目标构建验证；需要本地核对打包结果时，可手动运行 `npm run zip` 与 `npm run zip:firefox`，产物位于 `.output/`。
+
 ## 权限与隐私
 
 扩展采用 Manifest V3，并只声明以下 API 权限：

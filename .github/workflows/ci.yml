@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: 类型检查 / 测试 / 构建
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall 会执行 wxt prepare，生成 .wxt 类型。
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run compile
+
+      - name: 单元测试
+        run: npm test
+
+      # 只验证能构建，不产出分发包；打 tag 时由 release.yml 打包并发布。
+      - name: 构建 Chrome 与 Firefox
+        run: |
+          npm run build
+          npm run build:firefox
