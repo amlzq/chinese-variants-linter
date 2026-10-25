@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { RuntimeMessage } from "../src/shared/messages";
-import { DEFAULT_SETTINGS } from "../src/core/storage";
+import type { RuntimeMessage } from "../../src/shared/messages";
+import { DEFAULT_SETTINGS } from "../../src/core/storage";
 
 type Listener = (
   message: RuntimeMessage,
@@ -48,13 +48,13 @@ afterEach(() => {
 describe("background 消息处理", () => {
   it("注册 background 入口", async () => {
     const { defineBackground } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     expect(defineBackground).toHaveBeenCalledTimes(1);
   });
 
   it("拒绝来自非本扩展上下文的消息", async () => {
     const { listeners } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     expect(handler({ type: "settings/update", patch: {} }, { id: "other-id" })).toBeUndefined();
@@ -62,7 +62,7 @@ describe("background 消息处理", () => {
 
   it("忽略缺少 type 的消息", async () => {
     const { listeners } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     expect(handler({} as RuntimeMessage, { id: "self-id" })).toBeUndefined();
@@ -70,7 +70,7 @@ describe("background 消息处理", () => {
 
   it("popup/get-state 返回设置、站点与开关状态", async () => {
     const { listeners } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     const result = (await handler({ type: "popup/get-state" }, { id: "self-id" })) as {
@@ -86,7 +86,7 @@ describe("background 消息处理", () => {
 
   it("settings/update 合并并持久化补丁", async () => {
     const { listeners, store } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     const result = (await handler(
@@ -100,7 +100,7 @@ describe("background 消息处理", () => {
 
   it("site/toggle 记录站点开关", async () => {
     const { listeners } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     const result = (await handler(
@@ -113,7 +113,7 @@ describe("background 消息处理", () => {
 
   it("未知消息类型返回 undefined", async () => {
     const { listeners } = setupBackground();
-    await import("./background");
+    await import("../../entrypoints/background");
     const handler = listeners[0]!;
 
     expect(

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   ExtensionSettings,
   ForceReplaceRule,
+  ShortcutMap,
   UserDictionary,
   VariantCode,
 } from "../../shared/types";
@@ -105,7 +106,7 @@ describe("normalizeSettings - 纵深防御", () => {
 
   it("部分 shortcuts 与默认值合并", () => {
     const settings = normalizeSettings({
-      shortcuts: { acceptNext: null },
+      shortcuts: { acceptNext: null } as ShortcutMap,
     });
     expect(settings.shortcuts.acceptNext).toBeNull();
     expect(settings.shortcuts.toggleEnabled).toEqual(DEFAULT_SETTINGS.shortcuts.toggleEnabled);

@@ -1,23 +1,23 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_SETTINGS, mergeSettings, STORAGE_KEY } from "../src/core/storage";
-import { state } from "../src/content/state";
-import { ACTIVE_CLASS } from "../src/content/ui/styles";
-import { ensureCvlLauncher, hideLauncher } from "../src/content/ui/cvlLauncher";
+import { DEFAULT_SETTINGS, mergeSettings, STORAGE_KEY } from "../../src/core/storage";
+import { state } from "../../src/content/state";
+import { ACTIVE_CLASS } from "../../src/content/ui/styles";
+import { ensureCvlLauncher, hideLauncher } from "../../src/content/ui/cvlLauncher";
 import {
   ensureMainPanel,
   getMainPanelView,
   hideMainPanel,
   isMainPanelOpen,
-} from "../src/content/ui/mainPanel";
+} from "../../src/content/ui/mainPanel";
 import {
   ensureSelectionToolbar,
   hideSelectionToolbar,
-} from "../src/content/ui/selectionToolbar";
-import { getSelectionRect } from "../src/content/geometry/rects";
-import type { ExtensionSettings, ExtensionSettingsPatch } from "../src/shared/types";
+} from "../../src/content/ui/selectionToolbar";
+import { getSelectionRect } from "../../src/content/geometry/rects";
+import type { ExtensionSettings, ExtensionSettingsPatch } from "../../src/shared/types";
 
-vi.mock("../src/content/geometry/rects", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../src/content/geometry/rects")>();
+vi.mock("../../src/content/geometry/rects", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/content/geometry/rects")>();
   return { ...actual, getSelectionRect: vi.fn(() => null) };
 });
 
@@ -102,7 +102,7 @@ beforeAll(async () => {
   });
 
   vi.stubGlobal("defineContentScript", (config: { main: () => Promise<void> }) => config);
-  const module = await import("./content");
+  const module = await import("../../entrypoints/content");
   await (module.default as unknown as { main: () => Promise<void> }).main();
 });
 
@@ -340,7 +340,7 @@ describe("快捷键", () => {
   });
 
   it("设置视图打开时不响应快捷键", async () => {
-    const mainPanel = await import("../src/content/ui/mainPanel");
+    const mainPanel = await import("../../src/content/ui/mainPanel");
     const panel = mainPanel.ensureMainPanel();
     panel.dataset.hidden = "false";
     panel.dataset.view = "settings";
@@ -673,7 +673,7 @@ describe("快捷键补充", () => {
   });
 
   it("未绑定组合键不拦截事件", async () => {
-    press("z", { shiftKey: false, ctrlKey: false, meta: false });
+    press("z", { shiftKey: false, ctrlKey: false });
     expect(state.activeIssues).toEqual([]);
 
     const event = press("z");

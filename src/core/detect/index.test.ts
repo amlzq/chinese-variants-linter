@@ -104,7 +104,7 @@ describe("detectText", () => {
     const issues = detectText({
       text: "软件默认",
       settings,
-      ignoredIssueIds: new Set([first[1]!.id]),
+      ignoredIssueIds: [first[1]!.id],
     });
     expect(issues).toHaveLength(1);
     expect(issues[0]?.sourceText).toBe("软件");
@@ -116,7 +116,7 @@ describe("detectText", () => {
     const issues = detectText({
       text: "软件",
       settings,
-      ignoredIssueIds: new Set([first[0]!.id]),
+      ignoredIssueIds: [first[0]!.id],
     });
     expect(issues).toHaveLength(1);
     expect(issues[0]?.type).toBe("script");
