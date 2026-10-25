@@ -28,6 +28,8 @@ npm run dev
 npm run dev:firefox
 ```
 
+Firefox 构建要求 Firefox 140 或更高版本：manifest 中的 `data_collection_permissions`（声明不收集用户数据）自该版本起才被支持，更低版本无法通过安装校验。这一要求会排除部分旧版 Firefox 用户，属为满足当前发布规范的取舍。
+
 ## 构建
 
 ```bash
@@ -94,6 +96,8 @@ npm run compile
 
 内容脚本匹配网页地址，以便在网页编辑区执行核心检查功能。网页文本、词库和设置均在本地浏览器中处理；扩展不发送文本或用户数据到远程服务器。Firefox 构建包同时声明不收集或传输用户数据。
 
+页内品牌图标以内联 data URL 注入，扩展未声明 `web_accessible_resources`，因此不会向任何网站暴露扩展资源，网页也无法通过扩展 URL 探测扩展是否安装。
+
 ## 项目结构
 
 ```text
@@ -101,7 +105,8 @@ entrypoints/       扩展后台、内容脚本和弹窗入口
 src/core/          检测、规则、替换与本地存储逻辑
 src/content/       页面内状态、交互组件与样式
 src/shared/        共享类型、国际化和工具函数
-public/            图标与本地化资源
+src/assets/        品牌图标源文件与检测规则数据
+public/            工具栏图标位图与本地化资源
 ```
 
 ## 许可证
