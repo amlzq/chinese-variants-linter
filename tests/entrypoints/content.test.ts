@@ -128,7 +128,13 @@ beforeEach(async () => {
   window.getSelection()?.removeAllRanges();
   getSelectionRectMock.mockReturnValue(null);
   emitSettingsChange(
-    mergeSettings(DEFAULT_SETTINGS, { enabled: true, showOnSelection: true, defaultVariant: "zh-TW" }),
+    mergeSettings(DEFAULT_SETTINGS, {
+      enabled: true,
+      showOnSelection: true,
+      defaultVariant: "zh-TW",
+      // 站点开关默认关闭，测试需显式开启当前站点。
+      siteEnabledMap: { [location.hostname]: true },
+    }),
   );
   await flush();
 });

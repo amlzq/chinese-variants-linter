@@ -80,7 +80,8 @@ describe("background 消息处理", () => {
     };
 
     expect(result.hostname).toBe("example.com");
-    expect(result.siteEnabled).toBe(true);
+    // 站点开关默认关闭，未显式开启的站点不检查。
+    expect(result.siteEnabled).toBe(false);
     expect(result.settings.enabled).toBe(true);
   });
 

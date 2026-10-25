@@ -70,7 +70,7 @@ function App() {
           ...current,
           settings: next,
           siteEnabled: current.hostname
-            ? next.siteEnabledMap[current.hostname] ?? true
+            ? next.siteEnabledMap[current.hostname] ?? false
             : current.siteEnabled,
         }
         : current,

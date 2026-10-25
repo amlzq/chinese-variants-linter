@@ -175,15 +175,15 @@ describe("mergeSettings", () => {
 });
 
 describe("isSiteEnabled", () => {
-  it("无 hostname 时视为启用", () => {
-    expect(isSiteEnabled(DEFAULT_SETTINGS, null)).toBe(true);
+  it("无 hostname 时视为关闭", () => {
+    expect(isSiteEnabled(DEFAULT_SETTINGS, null)).toBe(false);
   });
 
-  it("未记录的站点默认启用", () => {
-    expect(isSiteEnabled(DEFAULT_SETTINGS, "unknown.com")).toBe(true);
+  it("未记录的站点默认关闭", () => {
+    expect(isSiteEnabled(DEFAULT_SETTINGS, "unknown.com")).toBe(false);
   });
 
-  it("站点被显式关闭时为 false", () => {
+  it("仅显式开启的站点返回 true", () => {
     const settings: ExtensionSettings = {
       ...DEFAULT_SETTINGS,
       siteEnabledMap: { "off.com": false, "on.com": true },

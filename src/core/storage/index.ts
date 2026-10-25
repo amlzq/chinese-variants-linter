@@ -49,6 +49,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   enabled: true,
   defaultVariant: detectDefaultVariant(),
   detectionLevel: "standard",
+  // 空映射表示所有站点默认关闭检查，用户需在设置中按站点开启。
   siteEnabledMap: {},
   userDictionary: DEFAULT_USER_DICTIONARY,
   showOnSelection: true,
@@ -214,8 +215,9 @@ export async function setSiteEnabled(
 
 export function isSiteEnabled(settings: ExtensionSettings, hostname: string | null): boolean {
   if (!hostname) {
-    return true;
+    return false;
   }
 
-  return settings.siteEnabledMap[hostname] ?? true;
+  // 站点开关默认关闭：未显式开启的站点不执行检查，由用户按站点主动启用。
+  return settings.siteEnabledMap[hostname] ?? false;
 }
