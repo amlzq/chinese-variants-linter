@@ -1,4 +1,5 @@
 import { getSettings, isSiteEnabled, setSiteEnabled, updateSettings } from "../src/core/storage";
+import { FEEDBACK_URL } from "../src/shared/feedback";
 import type { PopupState } from "../src/shared/types";
 
 async function getActiveHostname(): Promise<string | null> {
@@ -45,6 +46,9 @@ export default defineBackground(() => {
         return updateSettings(message.patch);
       case "site/toggle":
         return setSiteEnabled(message.hostname, message.enabled);
+      // 内容脚本不直接 window.open：以扩展身份开新标签页，不受页面弹窗拦截影响。
+      case "feedback/open":
+        return browser.tabs.create({ url: FEEDBACK_URL });
       default:
         return undefined;
     }

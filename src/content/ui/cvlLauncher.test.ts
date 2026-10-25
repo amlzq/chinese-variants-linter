@@ -25,6 +25,10 @@ vi.mock("../../shared/settingsClient", () => ({
   toggleSite: vi.fn(),
 }));
 
+vi.mock("../../shared/feedback", () => ({
+  openFeedbackPage: vi.fn(),
+}));
+
 vi.mock("./suggestionPopover", () => ({
   cancelHideSuggestionPopover: vi.fn(),
   scheduleHideSuggestionPopover: vi.fn(),
@@ -32,6 +36,7 @@ vi.mock("./suggestionPopover", () => ({
 
 const { isMainPanelOpen, openReviewView } = await import("./mainPanel");
 const { toggleSite } = await import("../../shared/settingsClient");
+const { openFeedbackPage } = await import("../../shared/feedback");
 const isMainPanelOpenMock = vi.mocked(isMainPanelOpen);
 
 function createIssue(id: string): Issue {
@@ -68,7 +73,6 @@ function getStatusButton(): HTMLButtonElement {
 }
 
 beforeEach(() => {
-  vi.stubGlobal("browser", { runtime: { getURL: () => "icon.svg" } });
   state.activeElement = createTextarea();
   state.activeIssues = [createIssue("issue-1")];
   const launcher = ensureCvlLauncher();
@@ -197,17 +201,12 @@ describe("启动器交互", () => {
     expect(openReviewView).toHaveBeenCalled();
   });
 
-  it("点击反馈按钮打开项目主页", () => {
-    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+  it("点击反馈按钮经后台打开项目主页", () => {
     ensureCvlLauncher()
       .querySelector<HTMLButtonElement>('[data-role="feedback"]')!
       .click();
 
-    expect(open).toHaveBeenCalledWith(
-      "https://github.com/amlzq/chinese-variants-linter/issues",
-      "_blank",
-      "noopener",
-    );
+    expect(openFeedbackPage).toHaveBeenCalled();
   });
 
   it("点击禁用按钮关闭当前站点", () => {

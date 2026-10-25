@@ -1,6 +1,6 @@
 {
   "name": "chinese-variants-linter",
-  "description": "chinese variants linter",
+  "description": "Detects inconsistent Chinese usage in web input fields and offers single-item replacement suggestions.",
   "private": true,
   "version": "0.1.0",
   "license": "MIT",

@@ -98,6 +98,36 @@ npm run compile
 
 页内品牌图标以内联 data URL 注入，扩展未声明 `web_accessible_resources`，因此不会向任何网站暴露扩展资源，网页也无法通过扩展 URL 探测扩展是否安装。
 
+## 商店数据声明
+
+提交 Chrome Web Store 与 Firefox Add-ons 时，可直接复制以下文案填写表单。
+
+### 中文
+
+**单一用途**：在网页输入区域检测中文简繁字形与地区用词是否与用户选择的目标变体一致，并提供逐项替换建议。
+
+**权限理由**：
+
+- `storage`：保存检测开关、目标变体、站点列表、允许词与快捷键等本地设置。
+- `activeTab`：用户打开扩展弹窗时读取当前标签页的主机名，用于显示该站点的启停开关。
+- 内容脚本匹配 `<all_urls>`：扩展需在任意网站的表单、评论区与富文本编辑器中就地检查文本；仅在用户开启检查的站点执行检测，关闭时立即退出，不读取页面其他内容。
+- 未申请 `tabs`、`history`、`cookies` 等权限，也未声明 `web_accessible_resources`。
+
+**数据使用**：扩展不收集、不存储、不传输用户数据。页面文本仅在本地浏览器内存中处理，不会发送到任何服务器；用户设置保存在浏览器本地存储（`storage.local`），卸载扩展即被清除。Firefox 构建包在 `data_collection_permissions` 中声明 `none`。
+
+### English
+
+**Single purpose**: Detect Chinese script and regional wording in web input fields that do not match the variant selected by the user, and offer single-item replacement suggestions.
+
+**Permission justification**:
+
+- `storage`: persist local settings such as the enabled state, target variant, per-site switches, allow list and shortcuts.
+- `activeTab`: read the active tab's hostname when the user opens the popup so the per-site switch can be displayed.
+- Content scripts on `<all_urls>`: the extension checks text inside forms, comment boxes and rich-text editors on arbitrary sites. Detection only runs on sites the user has enabled and exits immediately otherwise; no other page content is read.
+- No `tabs`, `history`, `cookies` or `web_accessible_resources` are requested.
+
+**Data usage**: The extension does not collect, store or transmit user data. Page text is processed in memory in the local browser and is never sent to a server. Settings are kept in `storage.local` and removed when the extension is uninstalled.
+
 ## 项目结构
 
 ```text

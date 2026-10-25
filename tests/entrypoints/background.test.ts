@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RuntimeMessage } from "../../src/shared/messages";
 import { DEFAULT_SETTINGS } from "../../src/core/storage";
+import { FEEDBACK_URL } from "../../src/shared/feedback";
 
 type Listener = (
   message: RuntimeMessage,
@@ -11,6 +12,7 @@ function setupBackground() {
   const listeners: Listener[] = [];
   const store = new Map<string, unknown>();
   const sendResponse = vi.fn();
+  const createTab = vi.fn(async ({ url }: { url: string }) => ({ url }));
 
   vi.stubGlobal("browser", {
     runtime: {
@@ -21,6 +23,7 @@ function setupBackground() {
     },
     tabs: {
       query: vi.fn(async () => [{ url: "https://example.com/page" }]),
+      create: createTab,
     },
     storage: {
       local: {
@@ -37,7 +40,7 @@ function setupBackground() {
   const defineBackground = vi.fn((callback: () => void) => callback());
   vi.stubGlobal("defineBackground", defineBackground);
 
-  return { listeners, defineBackground, store, sendResponse };
+  return { listeners, defineBackground, store, sendResponse, createTab };
 }
 
 afterEach(() => {
@@ -110,6 +113,16 @@ describe("background 消息处理", () => {
     )) as { siteEnabledMap: Record<string, boolean> };
 
     expect(result.siteEnabledMap["example.com"]).toBe(false);
+  });
+
+  it("feedback/open 以扩展身份打开反馈页", async () => {
+    const { listeners, createTab } = setupBackground();
+    await import("../../entrypoints/background");
+    const handler = listeners[0]!;
+
+    await handler({ type: "feedback/open" }, { id: "self-id" });
+
+    expect(createTab).toHaveBeenCalledWith({ url: FEEDBACK_URL });
   });
 
   it("未知消息类型返回 undefined", async () => {

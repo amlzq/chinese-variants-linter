@@ -1,5 +1,6 @@
 import { getEditableText } from "../../core/apply";
 import { getBrandIconUrl } from "../../shared/brand";
+import { openFeedbackPage } from "../../shared/feedback";
 import { t } from "../../shared/locale";
 import { toggleSite } from "../../shared/settingsClient";
 import { containsCjk } from "../../shared/text";
@@ -102,11 +103,7 @@ export function ensureCvlLauncher(): HTMLDivElement {
                 return;
             case "feedback":
                 hideLauncherTooltip();
-                window.open(
-                    "https://github.com/amlzq/chinese-variants-linter/issues",
-                    "_blank",
-                    "noopener",
-                );
+                void openFeedbackPage();
                 return;
             case "disable":
                 hideLauncherTooltip();
