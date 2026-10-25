@@ -126,7 +126,7 @@ describe("updateLauncher 状态与位置", () => {
     expect(getStatusButton().dataset.tooltip).toContain("1");
     expect(launcher.style.left).toBe(`${100 + 200 - 8 - LAUNCHER_EXPANDED_WIDTH}px`);
     expect(launcher.style.top).toBe(`${100 + 60 - 8 - LAUNCHER_HEIGHT}px`);
-    expect(launcher.style.getPropertyValue("--cvl-status-icon")).toContain("icon.svg");
+    expect(launcher.style.getPropertyValue("--cvl-status-icon")).toContain("data:image/svg+xml");
   });
 
   it("无问题时显示成功态", () => {

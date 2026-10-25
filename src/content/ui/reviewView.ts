@@ -30,7 +30,7 @@ export function isReviewViewOpen(): boolean {
 }
 
 function getLogoMarkup(): string {
-  // 与工具栏共用同一份品牌图标（public/icon.svg），改一处全局生效。
+  // 与工具栏共用同一份品牌图标（src/assets/brand-icon.svg），改一处全局生效。
   return `<img class="cvl-review-logo" src="${getBrandIconUrl()}" alt="" aria-hidden="true" />`;
 }
 

@@ -1,28 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { BRAND_ICON_PATH } from "./brand";
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.resetModules();
-});
+import { describe, expect, it } from "vitest";
+import { BRAND_ICON_SVG, getBrandIconUrl } from "./brand";
 
 describe("getBrandIconUrl", () => {
-  it("通过 runtime.getURL 解析扩展内地址", async () => {
-    const getURL = vi.fn(() => "moz-extension://abc/icon.svg");
-    vi.stubGlobal("browser", { runtime: { getURL } });
+  it("返回内联 SVG 的 data URL", () => {
+    const url = getBrandIconUrl();
 
-    const { getBrandIconUrl } = await import("./brand");
-    expect(getBrandIconUrl()).toBe("moz-extension://abc/icon.svg");
-    expect(getURL).toHaveBeenCalledWith(BRAND_ICON_PATH);
+    expect(url.startsWith("data:image/svg+xml;charset=utf-8,")).toBe(true);
+    expect(decodeURIComponent(url.slice(url.indexOf(",") + 1))).toBe(BRAND_ICON_SVG);
   });
 
-  it("重复调用只解析一次（模块级缓存）", async () => {
-    const getURL = vi.fn(() => "chrome-extension://abc/icon.svg");
-    vi.stubGlobal("browser", { runtime: { getURL } });
-
-    const { getBrandIconUrl } = await import("./brand");
-    getBrandIconUrl();
-    getBrandIconUrl();
-    expect(getURL).toHaveBeenCalledTimes(1);
+  it("重复调用返回同一结果（模块级常量）", () => {
+    expect(getBrandIconUrl()).toBe(getBrandIconUrl());
   });
 });

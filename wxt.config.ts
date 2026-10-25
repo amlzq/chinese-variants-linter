@@ -15,14 +15,9 @@ export default defineConfig({
     // popup 时临时读取当前标签页地址，以显示该站点的启停开关。避免申请
     // `tabs`（可读取所有标签页信息）的常驻权限。
     permissions: ["storage", "activeTab"],
-    // 允许内容脚本把品牌图标（public/icon.svg）以 <img> 形式注入到网页中渲染，
-    // 从而与工具栏图标共用同一份来源。
-    web_accessible_resources: [
-      {
-        resources: ["icon.svg"],
-        matches: ["<all_urls>"],
-      },
-    ],
+    // 页内品牌图标由 src/assets/brand-icon.svg 内联为 data URL，
+    // 因此不声明 web_accessible_resources：既不向所有站点暴露扩展资源，
+    // 也让网页无法通过扩展 URL 探测扩展是否安装。
     // 扩展只在本地处理页面文本和本地设置，不会传输或在浏览器外处理用户数据。
     // Firefox 140+ 要求新扩展明确声明此事实。
     browser_specific_settings: {

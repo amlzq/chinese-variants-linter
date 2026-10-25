@@ -116,7 +116,9 @@ describe("renderReviewInto", () => {
     expect(hideTooltip).toHaveBeenCalledWith(true);
     expect(view().querySelector(".cvl-review-empty-title")?.textContent).toBe(t("review.empty.title"));
     expect(view().querySelector(".cvl-review-count")).toBeNull();
-    expect(view().querySelector<HTMLImageElement>(".cvl-review-logo")?.src).toContain("icon.svg");
+    expect(view().querySelector<HTMLImageElement>(".cvl-review-logo")?.src).toContain(
+      "data:image/svg+xml",
+    );
   });
 
   it("渲染问题分类、上下文与计数", () => {
