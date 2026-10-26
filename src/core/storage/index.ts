@@ -11,8 +11,8 @@ export const STORAGE_KEY = "extension-settings";
 
 export const VARIANT_LABELS: Record<VariantCode, string> = {
   "zh-CN": "简体中文",
-  "zh-TW": "中文台湾",
-  "zh-HK": "中文香港",
+  "zh-TW": "中文（台湾）",
+  "zh-HK": "中文（香港）",
   "zh-Hant": "繁体中文",
 };
 

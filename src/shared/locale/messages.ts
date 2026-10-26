@@ -58,8 +58,8 @@ const zhHans: Record<string, string> = {
   "shortcut.acceptNext.desc": "接受当前建议并跳到下一处",
 
   "variant.zh-CN": "简体中文",
-  "variant.zh-TW": "中文台湾",
-  "variant.zh-HK": "中文香港",
+  "variant.zh-TW": "中文（台湾）",
+  "variant.zh-HK": "中文（香港）",
   "variant.zh-Hant": "繁体中文",
 
   "launcher.disable.tooltip": "在此网站关闭 CVLinter。",
@@ -193,8 +193,8 @@ const zhHant: Record<string, string> = {
   "shortcut.acceptNext.desc": "接受當前建議並跳到下一處",
 
   "variant.zh-CN": "簡體中文",
-  "variant.zh-TW": "中文台灣",
-  "variant.zh-HK": "中文香港",
+  "variant.zh-TW": "中文（台灣）",
+  "variant.zh-HK": "中文（香港）",
   "variant.zh-Hant": "繁體中文",
 
   "launcher.disable.tooltip": "在此網站關閉 CVLinter。",

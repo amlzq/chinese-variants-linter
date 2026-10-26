@@ -88,7 +88,7 @@ describe("getVariantLabel / 快捷键文案", () => {
   it("返回各变体的本地化名称", () => {
     setRegion("CN");
     expect(getVariantLabel("zh-CN")).toBe("简体中文");
-    expect(getVariantLabel("zh-TW")).toBe("中文台湾");
+    expect(getVariantLabel("zh-TW")).toBe("中文（台湾）");
     setRegion("EN");
     expect(getVariantLabel("zh-Hant")).toBe("Traditional Chinese");
   });

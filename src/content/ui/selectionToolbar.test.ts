@@ -86,7 +86,7 @@ describe("showSelectionToolbar", () => {
     expect(toolbar.querySelector<HTMLButtonElement>("[data-action='convert']")?.disabled).toBe(
       false,
     );
-    expect(toolbar.querySelector("[data-action='convert']")?.textContent).toContain("中文台湾");
+    expect(toolbar.querySelector("[data-action='convert']")?.textContent).toContain("中文（台湾）");
     expect(toolbar.querySelector("[data-action='convert']")?.getAttribute("title")).toBeNull();
   });
 
