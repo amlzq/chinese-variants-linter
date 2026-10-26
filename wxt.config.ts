@@ -1,10 +1,26 @@
 import { defineConfig } from "wxt";
+import { buildThirdPartyNotices } from "./scripts/third-party-notices";
 
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   // WXT 默认将 Firefox 目标回退到 MV2；显式固定为 MV3，确保各发布包
   // 使用相同的权限和后台脚本模型。
   manifestVersion: 3,
+  hooks: {
+    // 扩展包内置了 OpenCC 字典（Apache-2.0）、React 等第三方代码，
+    // 构建时随包附上它们的许可声明。
+    "build:publicAssets": (wxt, files) => {
+      files.push({
+        relativeDest: "THIRD_PARTY_LICENSES.txt",
+        contents: buildThirdPartyNotices(wxt.config.root),
+      });
+    },
+  },
+  zip: {
+    // 供 AMO 审核的源码包只需能复现构建的文件；测试覆盖率报告与内部文档
+    // （均在 .gitignore 中）不随包上传。
+    excludeSources: ["coverage/**", "docs/**"],
+  },
   // 按目标浏览器生成 manifest：`browser_specific_settings` 只有 Firefox 认识，
   // 若一并写进 Chrome 包，Chrome 会提示“未知清单键”。这里只对 Firefox 输出。
   manifest: ({ browser }) => ({

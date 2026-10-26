@@ -30,5 +30,6 @@
 - 未开启检查的站点不会插入任何页面节点；开启站点后才创建页内界面。
 - 目标为中文（台湾）时接受「台」字写法（如「台灣」「台北」），不提示改为 OpenCC 标准的「臺」。
 - 采用 Manifest V3，仅声明 `storage` 与 `activeTab` 权限。
+- 扩展包随附 `THIRD_PARTY_LICENSES.txt`，列出内置的 OpenCC 字典（Apache-2.0）、opencc-js、React 与 WXT 运行时的许可声明。
 
 [0.1.0]: https://github.com/amlzq/chinese-variants-linter/releases/tag/v0.1.0
