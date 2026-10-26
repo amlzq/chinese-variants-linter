@@ -268,7 +268,8 @@ function getSitesSection(): string {
   const hostname = location.hostname;
 
   // 「全站点默认开启检查」位于站点开关上方，决定未单独配置站点的默认值。
-  const defaultRow = `
+  const defaultSection = `
+    <section class="cvl-settings-section">
       <div class="cvl-settings-row">
         <div class="cvl-settings-row-info">
           <span class="cvl-settings-row-title">${t("settings.sites.defaultOn")}</span>
@@ -277,20 +278,21 @@ function getSitesSection(): string {
           <input type="checkbox" data-default-site ${s.defaultSiteEnabled ? "checked" : ""} />
           <span class="cvl-settings-toggle-slider"></span>
         </label>
-      </div>`;
+      </div>
+    </section>`;
 
   if (!hostname) {
     return `
+      ${defaultSection}
       <section class="cvl-settings-section">
-        ${defaultRow}
         <p class="cvl-settings-empty">${t("settings.sites.unknown")}</p>
       </section>`;
   }
 
   const siteEnabled = isSiteEnabled(s, hostname);
   return `
+    ${defaultSection}
     <section class="cvl-settings-section">
-      ${defaultRow}
       <div class="cvl-settings-row">
         <div class="cvl-settings-row-info">
           <span class="cvl-settings-row-title">${t("settings.sites.checkOn", { host: escapeHtml(hostname) })}</span>
