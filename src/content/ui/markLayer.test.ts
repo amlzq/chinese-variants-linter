@@ -7,6 +7,7 @@ import {
   clearIssueMarks,
   ensureMarkLayer,
   renderMarks,
+  syncMarksToElementScroll,
   updateActiveMarkState,
 } from "./markLayer";
 
@@ -106,6 +107,33 @@ describe("renderMarks", () => {
     expect(updateLauncher).toHaveBeenCalled();
   });
 
+  it("已滚出文本框可视区域的文字不渲染下划线", () => {
+    state.activeElement!.getBoundingClientRect = () =>
+      ({ left: 0, top: 100, right: 200, bottom: 160, width: 200, height: 60 }) as DOMRect;
+    measureMock.mockReturnValue([
+      { left: 10, top: 20, right: 30, bottom: 40, width: 20, height: 20 }, // 在上方滚出
+      { left: 10, top: 120, right: 30, bottom: 140, width: 20, height: 20 }, // 可见
+      { left: 10, top: 200, right: 30, bottom: 220, width: 20, height: 20 }, // 在下方滚出
+    ]);
+
+    renderMarks();
+
+    expect(ensureMarkLayer().querySelectorAll(".cvl-mark")).toHaveLength(1);
+  });
+
+  it("标注层裁剪到输入框盒子内，换行下划线不会画到框外", () => {
+    vi.stubGlobal("scrollX", 3);
+    vi.stubGlobal("scrollY", 4);
+    state.activeElement!.getBoundingClientRect = () =>
+      ({ left: 10, top: 20, right: 210, bottom: 80, width: 200, height: 60 }) as DOMRect;
+
+    renderMarks();
+
+    expect(ensureMarkLayer().style.clipPath).toBe(
+      "polygon(13px 24px, 213px 24px, 213px 84px, 13px 84px)",
+    );
+  });
+
   it("没有可编辑元素时隐藏标注层", () => {
     state.activeElement = null;
     renderMarks();
@@ -168,6 +196,29 @@ describe("renderMarks", () => {
     measureMock.mockReturnValue([]);
     renderMarks();
     expect(document.getElementById(POPOVER_ID)?.dataset.hidden).toBe("true");
+  });
+});
+
+describe("syncMarksToElementScroll", () => {
+  it("按输入框内部滚动位移同步平移标注，重绘后复位", () => {
+    const element = state.activeElement as HTMLTextAreaElement;
+    element.scrollTop = 10;
+    element.scrollLeft = 2;
+    renderMarks();
+    const content = () => ensureMarkLayer().querySelector<HTMLElement>(".cvl-mark-content")!;
+
+    element.scrollTop = 40;
+    element.scrollLeft = 5;
+    syncMarksToElementScroll();
+    expect(content().style.transform).toBe("translate(-3px, -30px)");
+
+    renderMarks();
+    expect(content().style.transform).toBe("");
+  });
+
+  it("没有已渲染标注时安全返回", () => {
+    clearIssueMarks();
+    expect(() => syncMarksToElementScroll()).not.toThrow();
   });
 });
 

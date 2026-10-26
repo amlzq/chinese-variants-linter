@@ -9,6 +9,46 @@ import { cancelHideSuggestionPopover, hideSuggestionPopover, hideSuggestionPopov
 
 let markLayer: HTMLDivElement | null = null;
 
+// 上一次完整渲染时活跃元素的内部滚动位置，以及此后累计的滚动位移。
+// 文本框内部滚动时，先用 transform 平移整个标注内容（同步、无需重新测量），
+// 随后再由完整重绘校正，避免快速滚动时下划线滞后。
+let renderedScroll = { left: 0, top: 0 };
+let scrollOffset = { x: 0, y: 0 };
+
+function getMarkContent(): HTMLElement | null {
+    return markLayer?.querySelector<HTMLElement>(".cvl-mark-content") ?? null;
+}
+
+/** 活跃元素内部滚动时同步平移已渲染的标注，使其紧跟文字。 */
+export function syncMarksToElementScroll(): void {
+    const element = state.activeElement;
+    const content = getMarkContent();
+    if (!element || !content) {
+        return;
+    }
+
+    scrollOffset = {
+        x: element.scrollLeft - renderedScroll.left,
+        y: element.scrollTop - renderedScroll.top,
+    };
+    content.style.transform = `translate(${-scrollOffset.x}px, ${-scrollOffset.y}px)`;
+}
+
+/** 把标注层裁剪到活跃元素的盒子内，换行或滚出的下划线不会画到输入框之外。 */
+function clipLayerToElement(layer: HTMLElement, element: Element): void {
+    const box = element.getBoundingClientRect();
+    if (box.right <= box.left || box.bottom <= box.top) {
+        layer.style.clipPath = "";
+        return;
+    }
+
+    const left = box.left + window.scrollX;
+    const right = box.right + window.scrollX;
+    const top = box.top + window.scrollY;
+    const bottom = box.bottom + window.scrollY;
+    layer.style.clipPath = `polygon(${left}px ${top}px, ${right}px ${top}px, ${right}px ${bottom}px, ${left}px ${bottom}px)`;
+}
+
 export function ensureMarkLayer(): HTMLDivElement {
     if (markLayer) {
         return markLayer;
@@ -48,8 +88,9 @@ export function updateActiveMarkState(): void {
 
     const highlightMarkup = rects
         .map((rect) => {
-            const left = Math.max(rect.left - 2, 0) + window.scrollX;
-            const top = Math.max(rect.top + 1, 0) + window.scrollY;
+            // 标注内容已按 scrollOffset 平移，此处换算回内容坐标系。
+            const left = Math.max(rect.left - 2, 0) + window.scrollX + scrollOffset.x;
+            const top = Math.max(rect.top + 1, 0) + window.scrollY + scrollOffset.y;
             const width = rect.width + 4;
             const height = Math.max(rect.height - 3, 10);
             return `
@@ -62,13 +103,31 @@ export function updateActiveMarkState(): void {
         })
         .join("");
 
-    layer.insertAdjacentHTML("afterbegin", highlightMarkup);
+    (getMarkContent() ?? layer).insertAdjacentHTML("afterbegin", highlightMarkup);
+}
+
+function isRectInsideViewport(
+    rect: { left: number; right: number; top: number; bottom: number },
+    viewport: { left: number; right: number; top: number; bottom: number },
+): boolean {
+    // 无布局盒（如 display 异常或测试环境）时不裁剪。
+    if (viewport.right <= viewport.left || viewport.bottom <= viewport.top) {
+        return true;
+    }
+
+    return (
+        rect.bottom > viewport.top &&
+        rect.top < viewport.bottom &&
+        rect.right > viewport.left &&
+        rect.left < viewport.right
+    );
 }
 
 export function clearIssueMarks(): void {
     state.issueRectMap.clear();
     ensureMarkLayer().innerHTML = "";
     ensureMarkLayer().dataset.hidden = "true";
+    scrollOffset = { x: 0, y: 0 };
     hideSuggestionPopover();
 }
 
@@ -83,6 +142,7 @@ export function renderMarks(): void {
 
     state.issueRectMap.clear();
     layer.innerHTML = "";
+    scrollOffset = { x: 0, y: 0 };
 
     if (!state.activeElement || state.activeIssues.length === 0) {
         layer.dataset.hidden = "true";
@@ -91,9 +151,15 @@ export function renderMarks(): void {
         return;
     }
 
+    // 文本框内部滚动后，已滚出可视区域的文字不应再显示下划线。
+    const viewport = state.activeElement.getBoundingClientRect();
+    renderedScroll = { left: state.activeElement.scrollLeft, top: state.activeElement.scrollTop };
+    clipLayerToElement(layer, state.activeElement);
     const fragments: string[] = [];
     for (const issue of state.activeIssues) {
-        const rects = measureIssueRects(state.activeElement, issue);
+        const rects = measureIssueRects(state.activeElement, issue).filter((rect) =>
+            isRectInsideViewport(rect, viewport),
+        );
         if (rects.length === 0) {
             continue;
         }
@@ -118,7 +184,7 @@ export function renderMarks(): void {
         });
     }
 
-    layer.innerHTML = fragments.join("");
+    layer.innerHTML = `<div class="cvl-mark-content">${fragments.join("")}</div>`;
     layer.dataset.hidden = state.issueRectMap.size === 0 ? "true" : "false";
 
     layer.querySelectorAll<HTMLButtonElement>(".cvl-mark").forEach((button) => {

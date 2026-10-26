@@ -3,7 +3,7 @@ import { matchCombo } from "../src/content/shortcuts";
 import { ensureIgnoredSet, state } from "../src/content/state";
 import { collapseLauncher, ensureCvlLauncher, hideLauncher, setLauncherBusy, setLauncherEditing, updateLauncher } from "../src/content/ui/cvlLauncher";
 import { ensureMainPanel, toggleReviewView } from "../src/content/ui/mainPanel";
-import { clearIssueMarks, ensureMarkLayer, renderMarks } from "../src/content/ui/markLayer";
+import { clearIssueMarks, ensureMarkLayer, renderMarks, syncMarksToElementScroll } from "../src/content/ui/markLayer";
 import { acceptAndAdvance, ensureReviewView, isReviewViewOpen, renderReviewViewIfOpen, syncReviewToCaret } from "../src/content/ui/reviewView";
 import { ensureSelectionToolbar, hideSelectionToolbar, isSelectionToolbarOpen, repositionSelectionToolbar, showSelectionToolbar } from "../src/content/ui/selectionToolbar";
 import { ensureSettingsView, isSettingsViewOpen } from "../src/content/ui/settingsView";
@@ -32,6 +32,8 @@ let uiReady = false;
 // RAF 节流相关变量（方案B：将多次滚动事件合并为一次更新）
 let scrollRafId: number | null = null;
 let pendingScrollUpdate = false;
+let pendingEditableScroll = false;
+let pendingResize = false;
 
 function setActiveElement(element: SupportedEditable | null): void {
   if (state.activeElement && state.activeElement !== element) {
@@ -390,13 +392,32 @@ function onSelectionChange(): void {
   }
 }
 
+function isScrollOfActiveEditable(target: EventTarget | null): boolean {
+  if (!state.activeElement || !(target instanceof Node) || target === document) {
+    return false;
+  }
+
+  return target === state.activeElement || target.contains(state.activeElement);
+}
+
 function onScrollOrResize(event: Event): void {
   if (!uiReady) {
     return;
   }
 
-  // 标记有待处理的更新
+  // 活跃文本框自身滚动：同步平移标注，使下划线逐帧紧跟文字（不经 RAF 延迟）；
+  // 随后的 RAF 完整重绘负责校正换行与可视区域裁剪。
+  if (event.type === "scroll" && event.target === state.activeElement) {
+    syncMarksToElementScroll();
+  }
+
+  // 标记有待处理的更新（同一帧内可能先后到达不同事件，分别记录）
   pendingScrollUpdate = true;
+  if (event.type === "resize") {
+    pendingResize = true;
+  } else if (isScrollOfActiveEditable(event.target)) {
+    pendingEditableScroll = true;
+  }
 
   // 如果已经有 RAF 调度，直接返回（节流）
   if (scrollRafId) {
@@ -410,23 +431,22 @@ function onScrollOrResize(event: Event): void {
     if (pendingScrollUpdate) {
       pendingScrollUpdate = false;
 
+      const resized = pendingResize;
+      const editableScrolled = pendingEditableScroll;
+      pendingResize = false;
+      pendingEditableScroll = false;
+
       // 区分 scroll 和 resize 事件处理
-      if (event.type === 'resize') {
+      if (resized) {
         // resize 事件：尺寸可能变化，需要强制刷新所有装饰
         refreshDecorations();
         repositionSelectionToolbar();
         repositionSuggestionPopover();
-      } else {
-        // scroll 事件：利用 position: absolute 自动跟随特性
-        // 所有使用 absolute 定位的浮层（launcher、marks、popover、toolbar）都会自动跟随文档滚动
-        // 因此页面级滚动时无需手动更新它们的位置
-        //
-        // 注意：只有以下情况需要处理：
-        // 1. 文本框内部滚动（如 textarea 滚动）→ 标注位置可能变化 → 但这种情况极少
-        // 2. 选区位置变化 → selectionToolbar 需要更新
-        //
-        // 当前策略：scroll 事件时不做任何浮层更新，避免性能问题
-        // 如果将来发现文本框内部滚动导致标注错位，可在此处添加轻量级的位置检测
+      } else if (editableScrolled) {
+        // 文本框（或其滚动祖先）内部滚动：标记层按文档坐标 absolute 定位，不会
+        // 随元素内部滚动，需按新的 scrollTop/scrollLeft 重新测量并重绘。
+        // 页面级滚动（target 为 document）由 absolute 定位自动跟随，无需处理。
+        refreshDecorations();
       }
     }
   });

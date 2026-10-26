@@ -13,15 +13,20 @@ import {
   ensureSelectionToolbar,
   hideSelectionToolbar,
 } from "../../src/content/ui/selectionToolbar";
-import { getSelectionRect } from "../../src/content/geometry/rects";
+import { getSelectionRect, measureIssueRects } from "../../src/content/geometry/rects";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "../../src/shared/types";
 
 vi.mock("../../src/content/geometry/rects", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/content/geometry/rects")>();
-  return { ...actual, getSelectionRect: vi.fn(() => null) };
+  return {
+    ...actual,
+    getSelectionRect: vi.fn(() => null),
+    measureIssueRects: vi.fn(actual.measureIssueRects),
+  };
 });
 
 const getSelectionRectMock = vi.mocked(getSelectionRect);
+const measureIssueRectsMock = vi.mocked(measureIssueRects);
 
 const store = new Map<string, unknown>();
 const changeListeners: Array<(changes: Record<string, unknown>, area: string) => void> = [];
@@ -217,6 +222,37 @@ describe("输入检测", () => {
     await vi.advanceTimersByTimeAsync(300);
 
     expect(state.activeIssues).toEqual([]);
+  });
+});
+
+describe("文本框内部滚动", () => {
+  it("滚动活跃文本框后按新的滚动位置重新测量下划线", async () => {
+    vi.useFakeTimers();
+    const textarea = createTextarea("软件默认");
+    activeTextareas.push(textarea);
+    focusIn(textarea);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(state.activeIssues.length).toBeGreaterThan(0);
+
+    measureIssueRectsMock.mockClear();
+    textarea.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(32);
+
+    expect(measureIssueRectsMock).toHaveBeenCalled();
+  });
+
+  it("页面级滚动不重新测量", async () => {
+    vi.useFakeTimers();
+    const textarea = createTextarea("软件默认");
+    activeTextareas.push(textarea);
+    focusIn(textarea);
+    await vi.advanceTimersByTimeAsync(300);
+
+    measureIssueRectsMock.mockClear();
+    document.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(32);
+
+    expect(measureIssueRectsMock).not.toHaveBeenCalled();
   });
 });
 
