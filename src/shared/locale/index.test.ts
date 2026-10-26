@@ -122,7 +122,7 @@ describe("getVariantLabel / 快捷键文案", () => {
   it("返回快捷键操作的名称与说明", () => {
     setRegion("CN");
     expect(getShortcutActionLabel("convertSelection")).toBe("转换当前选区");
-    expect(getShortcutDescription("convertSelection")).toContain("目标变体");
+    expect(getShortcutDescription("convertSelection")).toContain("目标地区用语");
   });
 });
 
