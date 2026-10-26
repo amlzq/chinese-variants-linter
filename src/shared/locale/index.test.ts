@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { messages } from "./messages";
 import {
   detectDefaultRegion,
   getExtensionName,
@@ -35,6 +36,31 @@ describe("t", () => {
 
   it("未知 key 返回 key 本身", () => {
     expect(t("not.exist.key")).toBe("not.exist.key");
+  });
+});
+
+describe("繁体地区用语", () => {
+  it("台湾与香港使用各自的地区用语", () => {
+    setRegion("TW");
+    expect(t("popup.detection.title")).toBe("偵測開關");
+    expect(t("settings.sites.defaultOn")).toBe("預設在所有網站開啟檢查");
+    expect(t("popup.force.to")).toBe("取代為");
+
+    setRegion("HK");
+    expect(t("popup.detection.title")).toBe("檢測開關");
+    expect(t("settings.sites.defaultOn")).toBe("預設在所有網站開啟檢查");
+    expect(t("popup.force.to")).toBe("替換為");
+  });
+
+  it("澳门沿用香港用语", () => {
+    expect(messages.MO).toBe(messages.HK);
+  });
+
+  it("各地区的 key 集合一致", () => {
+    const keys = Object.keys(messages.CN).sort();
+    for (const region of ["TW", "HK", "MO", "SG", "MY", "EN"] as const) {
+      expect(Object.keys(messages[region]).sort(), region).toEqual(keys);
+    }
   });
 });
 

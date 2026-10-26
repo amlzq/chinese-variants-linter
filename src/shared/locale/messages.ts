@@ -3,10 +3,11 @@
  *
  * 文案按书写系统归并为两套基础表：
  * - `zhHans`：简体（CN / SG / MY）
- * - `zhHant`：繁体（TW / HK / MO）
+ * - `zhHant`：繁体基础表（TW / HK / MO 的共同部分）
  *
- * 每个地区映射到对应基础表；如需针对某一地区做微调，可在该地区键下覆盖。
- * 新增 key 时务必在 `zhHans` 与 `zhHant` 中同时维护，保证 key 一致。
+ * 繁体按地区用语再做覆盖：`zhTWOverrides`（台湾）、`zhHKOverrides`（香港，澳门沿用）。
+ * 覆盖表只写与基础表不同的 key；新增 key 时在 `zhHans` 与 `zhHant` 中同时维护，
+ * 并检查两地用语是否需要各自覆盖。
  */
 
 const zhHans: Record<string, string> = {
@@ -416,12 +417,113 @@ const en: Record<string, string> = {
   "detect.suggestion.label": "Replace with “{target}”",
 };
 
+/**
+ * 台灣用語：在繁體基礎表上覆蓋地區差異（偵測／取代／使用者／網站／資訊／目前／回饋等）。
+ */
+const zhTWOverrides: Record<string, string> = {
+  "popup.loading": "載入中…",
+  "popup.subtitle": "本地偵測並提示網頁輸入內容中的變體不一致項。",
+  "popup.detection.title": "偵測開關",
+  "popup.detection.desc": "關閉後目前擴充功能不再執行偵測。",
+  "popup.detectionLevel.label": "偵測強度",
+  "level.standard": "標準：字形 + 高可信度用語",
+  "popup.showOnSelection.desc": "選取網頁中文文字時，在附近彈出浮動視窗提供轉換與複製。",
+  "popup.shortcut.desc": "點擊「錄製」後按下組合鍵即可綁定，點按「清除」可停用該操作。同一組合鍵可分配給多個操作，觸發時按目前上下文決定執行哪一個（如：有選取範圍時轉換，否則執行開關）。",
+  "popup.currentSite.title": "目前網站",
+  "popup.currentSite.unknown": "目前頁面無法識別網站",
+  "popup.allowTerms.desc": "對目前目標變體抑制警示，不參與取代。",
+  "popup.allowTerms.add": "新增",
+  "popup.allowTerms.empty": "目前變體下還沒有允許詞。",
+  "popup.force.title": "自訂取代",
+  "popup.force.desc": "優先順序高於內建規則，用於術語統一。",
+  "popup.force.to": "取代為",
+  "popup.force.add": "新增規則",
+  "popup.force.empty": "還沒有自訂取代規則。",
+  "shortcut.toggleEnabled.label": "開關偵測",
+  "shortcut.toggleEnabled.desc": "開啟或關閉全域偵測",
+  "shortcut.convertSelection.label": "轉換目前選取範圍",
+  "shortcut.acceptNext.desc": "接受目前建議並跳到下一處",
+  "launcher.feedback.tooltip": "回饋意見。",
+  "launcher.status.passed": "目前文字偵測通過",
+  "selbar.convertDisabled": "僅支援在可編輯文字中直接取代",
+  "review.category.term": "正確用字 · 修正用語",
+  "popover.noReplace": "目前編輯器結構較複雜，僅支援提示，不支援自動取代",
+  "settings.iWriteIn.desc": "選擇目標中文變體，偵測和轉換將以此為準",
+  "settings.detection.title": "偵測強度",
+  "settings.detection.desc": "控制偵測的嚴格程度",
+  "settings.enabled.title": "寫作建議偵測",
+  "settings.enabled.desc": "開啟後將在網頁編輯器中即時偵測中文變體不一致項",
+  "settings.showSel.desc": "選取網頁中文文字時彈出浮動視窗提供轉換與複製",
+  "settings.shortcuts.desc": "可使用任意按鍵組合（Tab、Enter、Caps Lock、Home、End、PageUp、PageDown、Delete、Backspace、Insert 及方向鍵除外）。同一組合鍵可分配給多個操作；觸發時按目前上下文決定執行哪一個（例如有選取範圍時轉換，否則執行開關）。",
+  "settings.shortcuts.unset": "未設定",
+  "settings.sites.defaultOn": "預設在所有網站開啟檢查",
+  "settings.sites.unknown": "目前頁面無法識別網站資訊。",
+  "settings.dict.title": "自訂字典",
+  "settings.dict.desc": "管理允許詞和自訂取代規則，目前目標變體：{variant}",
+  "settings.dict.allowDesc": "對目前目標變體抑制警示，不參與取代。",
+  "settings.dict.allowAdd": "新增",
+  "settings.dict.allowEmpty": "目前變體下還沒有允許詞。",
+  "settings.dict.forceTitle": "自訂取代規則",
+  "settings.dict.forceDesc": "優先順序高於內建規則，用於術語統一。",
+  "settings.dict.forceTo": "取代為",
+  "settings.dict.forceAdd": "新增規則",
+  "settings.dict.forceEmpty": "還沒有自訂取代規則。",
+  "detect.termMessage": "建議使用 {variant} 用語「{target}」",
+  "detect.explain.userForce": "命中使用者自訂取代規則",
+  "detect.explain.builtinTerm": "命中內建高可信度地區用語規則",
+  "detect.explain.contextScript": "該字形可能依賴上下文，請確認後取代",
+  "detect.explain.safeScript": "命中高可信度字形對應規則",
+  "detect.suggestion.term": "高可信度地區用語取代",
+  "detect.suggestion.script": "字形對應建議",
+  "detect.suggestion.label": "取代為「{target}」",
+};
+
+/**
+ * 香港用語：在繁體基礎表上覆蓋地區差異（檢測／替換／用詞／詞典／全局／優先次序／反饋等）。
+ * 澳門沿用香港用語。
+ */
+const zhHKOverrides: Record<string, string> = {
+  "popup.loading": "載入中…",
+  "level.standard": "標準：字形 + 高可信度用詞",
+  "popup.showOnSelection.desc": "選取網頁中文文字時，在附近彈出視窗提供轉換與複製。",
+  "popup.currentSite.title": "當前網站",
+  "popup.currentSite.unknown": "當前頁面無法識別網站",
+  "popup.allowTerms.desc": "對當前目標變體抑制警示，不參與替換。",
+  "popup.allowTerms.add": "新增",
+  "popup.force.title": "自訂替換",
+  "popup.force.desc": "優先次序高於內置規則，用於術語統一。",
+  "popup.force.add": "新增規則",
+  "popup.force.empty": "還沒有自訂替換規則。",
+  "shortcut.toggleEnabled.desc": "開啟或關閉全局檢測",
+  "settings.showSel.desc": "選取網頁中文文字時彈出視窗提供轉換與複製",
+  "settings.shortcuts.unset": "未設定",
+  "settings.sites.defaultOn": "預設在所有網站開啟檢查",
+  "settings.sites.unknown": "當前頁面無法識別網站資訊。",
+  "settings.dict.title": "自訂詞典",
+  "settings.dict.desc": "管理允許詞和自訂替換規則，當前目標變體：{variant}",
+  "settings.dict.allowDesc": "對當前目標變體抑制警示，不參與替換。",
+  "settings.dict.allowAdd": "新增",
+  "settings.dict.forceTitle": "自訂替換規則",
+  "settings.dict.forceDesc": "優先次序高於內置規則，用於術語統一。",
+  "settings.dict.forceAdd": "新增規則",
+  "settings.dict.forceEmpty": "還沒有自訂替換規則。",
+  "detect.termMessage": "建議使用 {variant} 用詞「{target}」",
+  "detect.explain.userForce": "命中用戶自訂替換規則",
+  "detect.explain.builtinTerm": "命中內置高可信度地區用詞規則",
+  "detect.explain.safeScript": "命中高可信度字形對應規則",
+  "detect.suggestion.term": "高可信度地區用詞替換",
+  "detect.suggestion.script": "字形對應建議",
+};
+
+const zhTW: Record<string, string> = { ...zhHant, ...zhTWOverrides };
+const zhHK: Record<string, string> = { ...zhHant, ...zhHKOverrides };
+
 export const messages: Record<Region, Record<string, string>> = {
   CN: zhHans,
   SG: zhHans,
   MY: zhHans,
-  TW: zhHant,
-  HK: zhHant,
-  MO: zhHant,
+  TW: zhTW,
+  HK: zhHK,
+  MO: zhHK,
   EN: en,
 };
