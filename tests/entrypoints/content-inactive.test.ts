@@ -77,4 +77,31 @@ describe("未开启检查的站点", () => {
     expect(hasExtensionNodes()).toBe(true);
     expect(state.activeElement).toBe(document.activeElement);
   });
+
+  it("UI 已创建后再关闭站点：聚焦输入框不闪现启动器", async () => {
+    emitSettingsChange(
+      mergeSettings(DEFAULT_SETTINGS, {
+        defaultVariant: "zh-TW",
+        siteEnabledMap: { [location.hostname]: false },
+      }),
+    );
+    await flush();
+
+    const launcher = document.getElementById(LAUNCHER_ID)!;
+    expect(launcher.dataset.hidden).toBe("true");
+
+    const textarea = document.createElement("textarea");
+    textarea.value = "软件";
+    document.body.append(textarea);
+    textarea.focus();
+    textarea.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+
+    // 聚焦后立即（早于 300ms 检测定时器）启动器仍须保持隐藏，且不进入编辑态。
+    expect(launcher.dataset.hidden).toBe("true");
+    expect(launcher.dataset.state).not.toBe("editing");
+
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(launcher.dataset.hidden).toBe("true");
+    expect(launcher.dataset.state).not.toBe("editing");
+  });
 });

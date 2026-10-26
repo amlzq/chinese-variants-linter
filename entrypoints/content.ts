@@ -139,6 +139,14 @@ function scheduleDetection(immediate = false): void {
     window.clearTimeout(detectionTimer);
   }
 
+  // 站点/全局检查已关闭（UI 已创建但不再工作）：不进入编辑态，否则启动器圆点会
+  // 在聚焦时闪现、待检测定时器触发后才被隐藏。
+  if (!isCheckingActive()) {
+    detectionTimer = null;
+    clearDecorations();
+    return;
+  }
+
   if (immediate) {
     void detectActiveElement();
     return;
