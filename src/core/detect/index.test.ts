@@ -15,7 +15,7 @@ describe("detectText", () => {
     });
 
     const issues = detectText({
-      text: "这个软件默认很好用。",
+      text: "软件默认很好用。",
       settings,
     });
 
@@ -44,7 +44,7 @@ describe("detectText", () => {
     });
 
     const issues = detectText({
-      text: "软件版本已发布。",
+      text: "软件很好用。",
       settings,
     });
 
@@ -66,7 +66,7 @@ describe("detectText", () => {
     });
 
     const issues = detectText({
-      text: "软件需要升级。",
+      text: "软件需要更新。",
       settings,
     });
 
@@ -106,8 +106,10 @@ describe("detectText", () => {
       settings,
       ignoredIssueIds: [first[1]!.id],
     });
-    expect(issues).toHaveLength(1);
+    expect(issues.map((issue) => issue.id)).not.toContain(first[1]!.id);
     expect(issues[0]?.sourceText).toBe("软件");
+    // 被忽略的词汇问题不再遮蔽其内部单字，「认」作为字形问题回退出现。
+    expect(issues[1]).toMatchObject({ type: "script", sourceText: "认" });
   });
 
   it("忽略词汇问题后，同位置的单字问题会作为回退出现", () => {
@@ -172,8 +174,8 @@ describe("detectText", () => {
 
   it("上下文敏感字形标记为中置信度", () => {
     const settings = createSettings({ defaultVariant: "zh-TW" });
-    const issues = detectText({ text: "这里", settings });
-    const issue = issues.find((item) => item.type === "script");
+    const issues = detectText({ text: "里面", settings });
+    const issue = issues.find((item) => item.sourceText === "里");
     expect(issue?.sourceText).toBe("里");
     expect(issue?.confidence).toBe("medium");
     expect(issue?.subtype).toBe("context-sensitive-char");
@@ -200,5 +202,21 @@ describe("detectText", () => {
     const issues = detectText({ text: "软件", settings });
     expect(issues[0]?.subtype).toBe("builtin-term");
     expect(issues[0]?.suggestions[0]?.value).toBe("軟體");
+  });
+
+  it("不误报一对多字在其他词中的用法", () => {
+    const settings = createSettings({ defaultVariant: "zh-TW" });
+    expect(detectText({ text: "方面 公里 皇后", settings })).toEqual([]);
+  });
+
+  it("繁体文本中合法的简繁同形字不报告", () => {
+    const settings = createSettings({ defaultVariant: "zh-TW" });
+    expect(detectText({ text: "干擾 里長 若干", settings })).toEqual([]);
+  });
+
+  it("覆盖内置规则以外的常见简体字", () => {
+    const settings = createSettings({ defaultVariant: "zh-TW", detectionLevel: "relaxed" });
+    const issues = detectText({ text: "网络", settings });
+    expect(issues.map((issue) => issue.suggestions[0]?.value)).toEqual(["網", "絡"]);
   });
 });

@@ -1,12 +1,12 @@
 import type {
   DetectTextOptions,
   Issue,
-  ScriptRule,
   Suggestion,
   VariantCode,
   VariantTermRule,
 } from "../../shared/types";
-import { getScriptSuggestion, loadRuleBundle } from "../rules";
+import { loadRuleBundle } from "../rules";
+import { findScriptChanges, type ScriptChange } from "../rules/script";
 import { getVariantLabel, t } from "../../shared/locale";
 
 interface RankedIssue {
@@ -130,32 +130,31 @@ function buildTermIssue(
   };
 }
 
-function buildScriptIssue(
-  rule: ScriptRule,
-  targetVariant: VariantCode,
-  replacement: string,
-  start: number,
-): RankedIssue {
+/** 字形问题的优先级：低于所有词汇规则，仅在同一区间内比较时使用。 */
+const SCRIPT_PRIORITY = 100;
+
+function buildScriptIssue(change: ScriptChange, targetVariant: VariantCode): RankedIssue {
+  const ruleId = `opencc:${change.source}>${change.target}`;
   return {
-    priority: rule.priority,
+    priority: SCRIPT_PRIORITY,
     issue: {
-      id: `${rule.id}:${start}:${start + rule.from.length}:${targetVariant}`,
+      id: `${ruleId}:${change.start}:${change.end}:${targetVariant}`,
       type: "script",
-      subtype: rule.contextSensitive ? "context-sensitive-char" : "safe-char",
-      sourceText: rule.from,
+      subtype: change.contextSensitive ? "context-sensitive-char" : "safe-char",
+      sourceText: change.source,
       targetVariant,
-      start,
-      end: start + rule.from.length,
-      confidence: rule.contextSensitive ? "medium" : "high",
+      start: change.start,
+      end: change.end,
+      confidence: change.contextSensitive ? "medium" : "high",
       message: t("detect.scriptMessage", {
         variant: getVariantLabel(targetVariant),
-        target: replacement,
+        target: change.target,
       }),
-      explanation: rule.contextSensitive
+      explanation: change.contextSensitive
         ? t("detect.explain.contextScript")
         : t("detect.explain.safeScript"),
-      suggestions: [createSuggestion(replacement, t("detect.suggestion.script"))],
-      ruleId: rule.id,
+      suggestions: [createSuggestion(change.target, t("detect.suggestion.script"))],
+      ruleId,
       replaceMode: "single-only",
       status: "active",
     },
@@ -213,47 +212,17 @@ function detectVariantTerms(
 function detectScriptIssues(
   text: string,
   targetVariant: VariantCode,
-  rules: ScriptRule[],
   allowTerms: Set<string>,
   ignoredIssueIds: Set<string>,
 ): RankedIssue[] {
-  const matches: RankedIssue[] = [];
-
-  for (const rule of rules) {
-    const replacement = getScriptSuggestion(rule, targetVariant);
-    if (!replacement || replacement === rule.from || allowTerms.has(rule.from)) {
-      continue;
-    }
-
-    let searchIndex = 0;
-    while (searchIndex < text.length) {
-      const index = text.indexOf(rule.from, searchIndex);
-      if (index === -1) {
-        break;
-      }
-
-      if (
-        isRangeCoveredByAllowedTerm(
-          text,
-          index,
-          index + rule.from.length,
-          allowTerms,
-        )
-      ) {
-        searchIndex = index + Math.max(1, rule.from.length);
-        continue;
-      }
-
-      const rankedIssue = buildScriptIssue(rule, targetVariant, replacement, index);
-      if (!ignoredIssueIds.has(rankedIssue.issue.id)) {
-        matches.push(rankedIssue);
-      }
-
-      searchIndex = index + Math.max(1, rule.from.length);
-    }
-  }
-
-  return matches;
+  return findScriptChanges(text, targetVariant)
+    .filter(
+      (change) =>
+        !allowTerms.has(change.source) &&
+        !isRangeCoveredByAllowedTerm(text, change.start, change.end, allowTerms),
+    )
+    .map((change) => buildScriptIssue(change, targetVariant))
+    .filter((rankedIssue) => !ignoredIssueIds.has(rankedIssue.issue.id));
 }
 
 export function detectText({ text, settings, ignoredIssueIds = [] }: DetectTextOptions): Issue[] {
@@ -283,7 +252,6 @@ export function detectText({ text, settings, ignoredIssueIds = [] }: DetectTextO
     detectScriptIssues(
       text,
       settings.defaultVariant,
-      bundle.scriptRules,
       bundle.allowTerms,
       ignored,
     ),

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../storage";
-import type { ScriptRule } from "../../shared/types";
 import {
-  convertTextToVariant,
-  getScriptConverter,
-  getScriptSuggestion,
   getSupportedVariants,
   loadRuleBundle,
 } from "./index";
@@ -20,8 +16,6 @@ describe("rules", () => {
 
   it("loadRuleBundle 返回非空的内置规则包", () => {
     const bundle = loadRuleBundle(DEFAULT_SETTINGS, "zh-TW");
-    expect(Array.isArray(bundle.scriptRules)).toBe(true);
-    expect(bundle.scriptRules.length).toBeGreaterThan(0);
     expect(Array.isArray(bundle.termRules)).toBe(true);
     expect(bundle.allowTerms instanceof Set).toBe(true);
   });
@@ -29,9 +23,6 @@ describe("rules", () => {
   it("loadRuleBundle 只保留目标变体有映射的规则", () => {
     for (const variant of getSupportedVariants()) {
       const bundle = loadRuleBundle(DEFAULT_SETTINGS, variant);
-      for (const rule of bundle.scriptRules) {
-        expect(rule.toByVariant[variant]).toBeDefined();
-      }
       for (const rule of bundle.termRules) {
         expect(rule.targets[variant]).toBeDefined();
       }
@@ -74,29 +65,5 @@ describe("rules", () => {
     });
     expect(loadRuleBundle(settings, "zh-TW").allowTerms.has("軟體")).toBe(true);
     expect(loadRuleBundle(settings, "zh-TW").allowTerms.has("軟件")).toBe(false);
-  });
-
-  it("convertTextToVariant 转换字形", () => {
-    expect(convertTextToVariant("软件", "zh-TW")).toBe("軟件");
-    expect(convertTextToVariant("軟", "zh-CN")).toBe("软");
-  });
-
-  it("getScriptConverter 对同一变体复用实例", () => {
-    expect(getScriptConverter("zh-TW")).toBe(getScriptConverter("zh-TW"));
-  });
-
-  it("getScriptSuggestion 在缺少目标变体映射时返回 null", () => {
-    const rule: ScriptRule = {
-      id: "r",
-      kind: "script",
-      from: "软",
-      toByVariant: { "zh-TW": "軟" },
-      contextSensitive: false,
-      enabled: true,
-      priority: 1,
-      source: "builtin",
-    };
-    expect(getScriptSuggestion(rule, "zh-TW")).toBe("軟");
-    expect(getScriptSuggestion(rule, "zh-CN")).toBeNull();
   });
 });

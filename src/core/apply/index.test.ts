@@ -240,4 +240,14 @@ describe("convertText", () => {
   it("多个命中项从后往前替换，索引互不干扰", () => {
     expect(convertText("视频和出租车", createSettings())).toBe("影片和計程車");
   });
+
+  it("选区转换不把「方面」「公里」「皇后」误转", () => {
+    expect(convertText("方面 公里 皇后 面条 后来", createSettings({ detectionLevel: "relaxed" }))).toBe(
+      "方面 公里 皇后 麵條 後來",
+    );
+  });
+
+  it("选区转换覆盖内置规则以外的字", () => {
+    expect(convertText("网络设置", createSettings({ detectionLevel: "relaxed" }))).toBe("網絡設置");
+  });
 });

@@ -104,13 +104,6 @@ export interface BaseRule {
     tags?: string[];
 }
 
-export interface ScriptRule extends BaseRule {
-    kind: "script";
-    from: string;
-    toByVariant: Partial<Record<VariantCode, string>>;
-    contextSensitive: boolean;
-}
-
 export interface VariantTermRule extends BaseRule {
     kind: "variant_term";
     sourceTerm: string;
@@ -118,7 +111,7 @@ export interface VariantTermRule extends BaseRule {
     safe: boolean;
 }
 
-export type Rule = ScriptRule | VariantTermRule;
+export type Rule = VariantTermRule;
 
 export interface PopupState {
     settings: ExtensionSettings;
