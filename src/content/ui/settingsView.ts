@@ -131,6 +131,7 @@ function getBodyMarkup(): string {
     ${getEnabledSection()}
     ${getDictionarySection()}
     ${getShortcutsSection()}
+    ${getPrivacySection()}
   `;
 }
 
@@ -246,6 +247,17 @@ function getShortcutsSection(): string {
               </div>
             </div>`;
   }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function getPrivacySection(): string {
+  return `
+    <section class="cvl-settings-section">
+      <div class="cvl-settings-section-head">
+        <h3>${t("settings.privacy.title")}</h3>
+        <p>${t("settings.privacy.desc")}</p>
       </div>
     </section>
   `;

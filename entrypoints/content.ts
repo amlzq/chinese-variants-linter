@@ -25,6 +25,9 @@ import type { ExtensionSettings, Issue, ShortcutAction } from "../src/shared/typ
 
 let settings: ExtensionSettings;
 let detectionTimer: number | null = null;
+// 页内 UI（样式、标记层、浮层、启动器、面板）只在当前站点开启检查后才创建，
+// 未开启的站点不向页面插入任何节点，页面级事件处理也直接返回。
+let uiReady = false;
 
 // RAF 节流相关变量（方案B：将多次滚动事件合并为一次更新）
 let scrollRafId: number | null = null;
@@ -41,8 +44,27 @@ function setActiveElement(element: SupportedEditable | null): void {
   }
 }
 
+function isCheckingActive(): boolean {
+  return settings.enabled && isSiteEnabled(settings, location.hostname);
+}
+
+function ensureUi(): void {
+  if (uiReady) {
+    return;
+  }
+
+  uiReady = true;
+  ensureStyles();
+  ensureMarkLayer();
+  ensureSuggestionPopover();
+  ensureCvlLauncher();
+  ensureMainPanel();
+  ensureSelectionToolbar();
+}
+
 function isExtensionUiTarget(target: EventTarget | null): boolean {
   return (
+    uiReady &&
     target instanceof Node &&
     (ensureSuggestionPopover().contains(target) ||
       ensureMarkLayer().contains(target) ||
@@ -194,7 +216,7 @@ async function allowIssue(issue: Issue): Promise<void> {
 }
 
 function onFocusIn(event: FocusEvent): void {
-  if (isExtensionUiTarget(event.target)) {
+  if (!uiReady || isExtensionUiTarget(event.target)) {
     return;
   }
 
@@ -210,7 +232,7 @@ function onFocusIn(event: FocusEvent): void {
 }
 
 function onInput(event: Event): void {
-  if (!state.activeElement || event.target !== state.activeElement) {
+  if (!uiReady || !state.activeElement || event.target !== state.activeElement) {
     return;
   }
 
@@ -218,7 +240,7 @@ function onInput(event: Event): void {
 }
 
 function onPaste(event: ClipboardEvent): void {
-  if (!state.activeElement || event.target !== state.activeElement) {
+  if (!uiReady || !state.activeElement || event.target !== state.activeElement) {
     return;
   }
 
@@ -317,7 +339,7 @@ function evaluateSelection(): void {
 }
 
 function onMouseUp(event: MouseEvent): void {
-  if (event.button !== 0) {
+  if (!uiReady || event.button !== 0) {
     return;
   }
   if (isExtensionUiTarget(event.target)) {
@@ -327,13 +349,17 @@ function onMouseUp(event: MouseEvent): void {
 }
 
 function onTouchEnd(event: TouchEvent): void {
-  if (isExtensionUiTarget(event.target)) {
+  if (!uiReady || isExtensionUiTarget(event.target)) {
     return;
   }
   window.setTimeout(evaluateSelection, 0);
 }
 
 function onSelectionChange(): void {
+  if (!uiReady) {
+    return;
+  }
+
   if (isSelectionToolbarOpen()) {
     const active = document.activeElement;
     if (active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement) {
@@ -357,6 +383,10 @@ function onSelectionChange(): void {
 }
 
 function onScrollOrResize(event: Event): void {
+  if (!uiReady) {
+    return;
+  }
+
   // 标记有待处理的更新
   pendingScrollUpdate = true;
 
@@ -458,14 +488,14 @@ function isActionApplicable(action: ShortcutAction): boolean {
         Boolean(getSelectionInfo()?.editableTarget)
       );
     case "acceptNext":
-      return state.activeIssues.length > 0 || isReviewViewOpen();
+      return uiReady && (state.activeIssues.length > 0 || isReviewViewOpen());
     default:
       return false;
   }
 }
 
 function onKeyDown(event: KeyboardEvent): void {
-  if (isExtensionUiTarget(event.target) || isSettingsViewOpen()) {
+  if (uiReady && (isExtensionUiTarget(event.target) || isSettingsViewOpen())) {
     return;
   }
 
@@ -491,6 +521,10 @@ function onKeyDown(event: KeyboardEvent): void {
 }
 
 function onPointerDown(event: PointerEvent): void {
+  if (!uiReady) {
+    return;
+  }
+
   const target = event.target as Node | null;
   const card = ensureSuggestionPopover();
   const layer = ensureMarkLayer();
@@ -510,14 +544,11 @@ function onPointerDown(event: PointerEvent): void {
 export default defineContentScript({
   matches: ["<all_urls>"],
   main: async () => {
-    ensureStyles();
-    ensureMarkLayer();
-    ensureSuggestionPopover();
-    ensureCvlLauncher();
-    ensureMainPanel();
-    ensureSelectionToolbar();
     settings = await getSettings();
     setRegion(detectDefaultRegion());
+    if (isCheckingActive()) {
+      ensureUi();
+    }
     state.actions = {
       replace: replaceIssue,
       ignore: ignoreIssue,
@@ -545,6 +576,16 @@ export default defineContentScript({
       void getSettings().then((nextSettings) => {
         settings = nextSettings;
         setRegion(detectDefaultRegion());
+        if (!uiReady && isCheckingActive()) {
+          ensureUi();
+          // 站点刚开启时，已聚焦的编辑区错过了 focusin，这里补上。
+          if (isEditableElement(document.activeElement)) {
+            setActiveElement(document.activeElement);
+          }
+        }
+        if (!uiReady) {
+          return;
+        }
         void detectActiveElement(true);
         evaluateSelection();
       });

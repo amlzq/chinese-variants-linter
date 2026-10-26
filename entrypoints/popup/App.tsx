@@ -498,6 +498,13 @@ function App() {
             })}
           </div>
         </section>
+
+        <section className="cvl-settings-section">
+          <div className="cvl-settings-section-head">
+            <h3>{t("settings.privacy.title")}</h3>
+            <p>{t("settings.privacy.desc")}</p>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -1,0 +1,80 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { DEFAULT_SETTINGS, mergeSettings, STORAGE_KEY } from "../../src/core/storage";
+import { state } from "../../src/content/state";
+import { LAUNCHER_ID, LAYER_ID, STYLE_ID } from "../../src/content/ui/styles";
+import type { ExtensionSettings } from "../../src/shared/types";
+
+const store = new Map<string, unknown>();
+const changeListeners: Array<(changes: Record<string, unknown>, area: string) => void> = [];
+
+function flush(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function emitSettingsChange(next: ExtensionSettings): void {
+  store.set(STORAGE_KEY, next);
+  for (const listener of changeListeners) {
+    listener({ [STORAGE_KEY]: { newValue: next } }, "local");
+  }
+}
+
+function hasExtensionNodes(): boolean {
+  return [STYLE_ID, LAYER_ID, LAUNCHER_ID].some((id) => document.getElementById(id) !== null);
+}
+
+beforeAll(async () => {
+  // 站点开关默认关闭。
+  store.set(STORAGE_KEY, mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW" }));
+
+  vi.stubGlobal("browser", {
+    runtime: { sendMessage: vi.fn(async () => store.get(STORAGE_KEY)) },
+    storage: {
+      local: {
+        get: vi.fn(async (key: string) => ({ [key]: store.get(key) })),
+        set: vi.fn(async () => undefined),
+      },
+      onChanged: {
+        addListener: (listener: (changes: Record<string, unknown>, area: string) => void) => {
+          changeListeners.push(listener);
+        },
+      },
+    },
+  });
+
+  vi.stubGlobal("defineContentScript", (config: { main: () => Promise<void> }) => config);
+  const module = await import("../../entrypoints/content");
+  await (module.default as unknown as { main: () => Promise<void> }).main();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("未开启检查的站点", () => {
+  it("不向页面插入扩展节点，也不响应编辑区事件", () => {
+    expect(hasExtensionNodes()).toBe(false);
+
+    const textarea = document.createElement("textarea");
+    textarea.value = "软件";
+    document.body.append(textarea);
+    textarea.focus();
+    textarea.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(state.activeElement).toBeNull();
+    expect(hasExtensionNodes()).toBe(false);
+  });
+
+  it("开启站点后创建 UI，并接管已聚焦的编辑区", async () => {
+    emitSettingsChange(
+      mergeSettings(DEFAULT_SETTINGS, {
+        defaultVariant: "zh-TW",
+        siteEnabledMap: { [location.hostname]: true },
+      }),
+    );
+    await flush();
+
+    expect(hasExtensionNodes()).toBe(true);
+    expect(state.activeElement).toBe(document.activeElement);
+  });
+});

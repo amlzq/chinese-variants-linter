@@ -220,3 +220,24 @@ describe("detectText", () => {
     expect(issues.map((issue) => issue.suggestions[0]?.value)).toEqual(["網", "絡"]);
   });
 });
+
+describe("detectText 地区词汇", () => {
+  it("繁体字形的大陆用词按目标地区提示", () => {
+    const settings = mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW" });
+    const [issue] = detectText({ text: "服務器", settings });
+    expect(issue).toMatchObject({ type: "variant_term", sourceText: "服務器" });
+    expect(issue?.suggestions[0]?.value).toBe("伺服器");
+  });
+
+  it("台湾用词转大陆用词", () => {
+    const settings = mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-CN" });
+    const values = detectText({ text: "資料庫伺服器", settings }).map((issue) => issue.suggestions[0]?.value);
+    expect(values).toEqual(["数据库", "服务器"]);
+  });
+
+  it("「使用户」中的「用户」为中置信度", () => {
+    const settings = mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW" });
+    const issue = detectText({ text: "使用户满意", settings }).find((item) => item.sourceText === "用户");
+    expect(issue?.confidence).toBe("medium");
+  });
+});
