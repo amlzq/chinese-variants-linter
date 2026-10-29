@@ -165,6 +165,11 @@ function getHeaderMarkup(): string {
   `;
 }
 
+function getAcceptAllMarkup(): string {
+  const disabled = !state.activeElement || !canReplaceIssue(state.activeElement);
+  return `<button class="cvl-review-accept-all" type="button" data-role="accept-all" ${disabled ? "disabled" : ""}>${t("review.acceptAll")}</button>`;
+}
+
 function getIssueCardMarkup(issue: Issue, index: number, total: number): string {
   const suggestion = issue.suggestions.find((s) => s.isDefault) ?? issue.suggestions[0];
   const targetValue = suggestion?.value ?? issue.sourceText;
@@ -226,6 +231,7 @@ export function renderReviewInto(panel: HTMLDivElement): void {
       <div class="cvl-review-title-row">
         <h2 class="cvl-review-title">${t("review.title")}</h2>
         <span class="cvl-review-count">${errorCount}</span>
+        ${errorCount > 1 ? getAcceptAllMarkup() : ""}
       </div>
       <div class="cvl-review-card-wrap">
         ${getIssueCardMarkup(issue, currentIndex, errorCount)}
@@ -255,6 +261,10 @@ function bindHeaderEvents(): void {
 
 function bindCardEvents(): void {
   const panel = ensureReviewView();
+
+  panel.querySelector<HTMLButtonElement>("[data-role='accept-all']")?.addEventListener("click", async () => {
+    await state.actions?.replaceAll();
+  });
 
   panel.querySelectorAll<HTMLButtonElement>(".cvl-review-icon-action").forEach((btn) => {
     attachTooltip(btn);

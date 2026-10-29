@@ -740,6 +740,34 @@ export function ensureStyles(): void {
       font-weight: 700;
     }
 
+    #${REVIEW_VIEW_ID} .cvl-review-accept-all {
+      margin-left: auto;
+      border: 0;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--cvl-primary-soft);
+      color: var(--cvl-primary);
+      transition: background-color 140ms ease;
+    }
+
+    #${REVIEW_VIEW_ID} .cvl-review-accept-all:hover:not(:disabled) {
+      background: var(--cvl-primary-soft-hover);
+    }
+
+    #${REVIEW_VIEW_ID} .cvl-review-accept-all:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 2px var(--cvl-focus-ring);
+    }
+
+    #${REVIEW_VIEW_ID} .cvl-review-accept-all:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     #${REVIEW_VIEW_ID} .cvl-review-card-wrap {
       display: flex;
       flex-direction: column;

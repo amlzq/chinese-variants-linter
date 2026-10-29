@@ -47,7 +47,7 @@ function createTextarea(text = "软件"): HTMLTextAreaElement {
 }
 
 function createActions() {
-  return { replace: vi.fn(async () => {}), allow: vi.fn(async () => {}), ignore: vi.fn(async () => {}) };
+  return { replace: vi.fn(async () => {}), allow: vi.fn(async () => {}), ignore: vi.fn(async () => {}), replaceAll: vi.fn(async () => {}) };
 }
 
 beforeEach(() => {

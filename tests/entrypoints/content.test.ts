@@ -461,6 +461,17 @@ describe("正文动作", () => {
     expect(state.activeIssues).toEqual([]);
   });
 
+  it("全部接受：一次替换所有建议项并重新检测", async () => {
+    const textarea = await activate("软件默认");
+    expect(state.activeIssues.length).toBeGreaterThan(1);
+
+    await state.actions!.replaceAll();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(textarea.value).toBe("軟體預設");
+    expect(state.activeIssues).toEqual([]);
+  });
+
   it("忽略建议项后从结果中移除", async () => {
     await activate("软件默认");
     const issue = state.activeIssues[0];

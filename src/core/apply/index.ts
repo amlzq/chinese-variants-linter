@@ -71,6 +71,77 @@ export function applyIssueSuggestion(
   return true;
 }
 
+function getDefaultReplacement(issue: Issue): string | null {
+  const suggestion = issue.suggestions.find((item) => item.isDefault) ?? issue.suggestions[0];
+  return suggestion ? suggestion.value : null;
+}
+
+/**
+ * 一次性应用所有问题的默认建议。自后向前替换，保证前面的偏移不受影响；
+ * 只写入一次、只派发一次 input/change，避免逐项替换时反复重新检测。
+ * 返回实际替换的数量（不可替换的复杂编辑器返回 0）。
+ */
+export function applyAllSuggestions(element: SupportedEditable, issues: Issue[]): number {
+  if (issues.length === 0 || !canReplaceIssue(element)) {
+    return 0;
+  }
+
+  const original = getEditableText(element);
+  // 先按位置升序剔除无建议项和与前一项重叠的问题（先出现者优先），再自后向前替换。
+  const planned: Array<{ issue: Issue; replacement: string }> = [];
+  let previousEnd = 0;
+  for (const issue of [...issues].sort((a, b) => a.start - b.start)) {
+    const replacement = getDefaultReplacement(issue);
+    if (
+      replacement === null ||
+      issue.start < previousEnd ||
+      issue.start < 0 ||
+      issue.end > original.length ||
+      issue.start >= issue.end
+    ) {
+      continue;
+    }
+    planned.push({ issue, replacement });
+    previousEnd = issue.end;
+  }
+
+  // 光标/选区按各替换造成的长度变化平移。
+  const isField = element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement;
+  let selectionStart = isField ? (element.selectionStart ?? original.length) : 0;
+  let selectionEnd = isField ? (element.selectionEnd ?? original.length) : 0;
+  let next = original;
+  let count = 0;
+
+  for (const { issue, replacement } of planned.reverse()) {
+    next = `${next.slice(0, issue.start)}${replacement}${next.slice(issue.end)}`;
+    const delta = replacement.length - (issue.end - issue.start);
+    if (selectionStart >= issue.end) {
+      selectionStart += delta;
+    } else if (selectionStart > issue.start) {
+      selectionStart = issue.start + replacement.length;
+    }
+    if (selectionEnd >= issue.end) {
+      selectionEnd += delta;
+    } else if (selectionEnd > issue.start) {
+      selectionEnd = issue.start + replacement.length;
+    }
+    count += 1;
+  }
+
+  if (count === 0) {
+    return 0;
+  }
+
+  if (isField) {
+    element.value = next;
+    element.setSelectionRange(Math.max(0, selectionStart), Math.max(0, selectionEnd));
+  } else {
+    element.textContent = next;
+  }
+  dispatchInputLikeEvents(element);
+  return count;
+}
+
 export function convertText(text: string, settings: ExtensionSettings): string {
   const issues = detectText({ text, settings });
   if (issues.length === 0) {

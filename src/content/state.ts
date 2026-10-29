@@ -6,6 +6,7 @@ export interface ActionHandlers {
   replace: (issue: Issue) => Promise<void>;
   ignore: (issue: Issue) => Promise<void>;
   allow: (issue: Issue) => Promise<void>;
+  replaceAll: () => Promise<void>;
 }
 
 /**

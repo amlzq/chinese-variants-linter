@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../storage";
 import type { ExtensionSettings, ExtensionSettingsPatch, Issue } from "../../shared/types";
 import {
+  applyAllSuggestions,
   applyIssueSuggestion,
   canReplaceIssue,
   convertText,
@@ -175,6 +176,76 @@ describe("applyIssueSuggestion", () => {
     const element = document.createElement("div");
     element.append(document.createElement("span"), document.createTextNode("文本"));
     expect(applyIssueSuggestion(element, createIssue(), "替換")).toBe(false);
+  });
+});
+
+describe("applyAllSuggestions", () => {
+  it("一次替换所有问题，只派发一次事件", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "软件和视频";
+    const events: string[] = [];
+    textarea.addEventListener("input", () => events.push("input"));
+
+    const count = applyAllSuggestions(textarea, [
+      createIssue({ id: "a", start: 0, end: 2 }),
+      createIssue({
+        id: "b",
+        sourceText: "视频",
+        start: 3,
+        end: 5,
+        suggestions: [{ value: "影片", label: "label", isDefault: true }],
+      }),
+    ]);
+
+    expect(count).toBe(2);
+    expect(textarea.value).toBe("軟體和影片");
+    expect(events).toEqual(["input"]);
+  });
+
+  it("替换长度变化时按位移调整光标，且不依赖传入顺序", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "ab软件cd视频";
+    textarea.setSelectionRange(8, 8);
+
+    applyAllSuggestions(textarea, [
+      createIssue({
+        id: "b",
+        start: 6,
+        end: 8,
+        suggestions: [{ value: "影片觀看", label: "label", isDefault: true }],
+      }),
+      createIssue({ id: "a", start: 2, end: 4, suggestions: [{ value: "軟", label: "label", isDefault: true }] }),
+    ]);
+
+    expect(textarea.value).toBe("ab軟cd影片觀看");
+    // 光标在末尾：前一处缩短 1，后一处增长 2，整体 +1。
+    expect(textarea.selectionStart).toBe(9);
+  });
+
+  it("跳过没有建议项或与前一项重叠的问题", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "软件开发";
+
+    const count = applyAllSuggestions(textarea, [
+      createIssue({ id: "a", start: 0, end: 2 }),
+      createIssue({ id: "overlap", start: 1, end: 3 }),
+      createIssue({ id: "none", start: 2, end: 4, suggestions: [] }),
+    ]);
+
+    expect(count).toBe(1);
+    expect(textarea.value).toBe("軟體开发");
+  });
+
+  it("支持简单 contenteditable，复杂结构与空列表返回 0", () => {
+    const simple = createContentEditable("软件");
+    expect(applyAllSuggestions(simple, [createIssue()])).toBe(1);
+    expect(simple.textContent).toBe("軟體");
+
+    const complex = createContentEditable("");
+    complex.innerHTML = "<p>软件</p><p>视频</p>";
+    expect(applyAllSuggestions(complex, [createIssue()])).toBe(0);
+
+    expect(applyAllSuggestions(document.createElement("textarea"), [])).toBe(0);
   });
 });
 

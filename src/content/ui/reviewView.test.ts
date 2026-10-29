@@ -80,6 +80,7 @@ function createActions() {
     replace: vi.fn(async () => {}),
     allow: vi.fn(async () => {}),
     ignore: vi.fn(async () => {}),
+    replaceAll: vi.fn(async () => {}),
   };
 }
 
@@ -213,6 +214,34 @@ describe("头部与卡片交互", () => {
     expect(state.actions!.replace).toHaveBeenCalledWith(expect.objectContaining({ id: "issue-1" }));
     expect(state.actions!.ignore).toHaveBeenCalledWith(expect.objectContaining({ id: "issue-1" }));
     expect(state.actions!.allow).toHaveBeenCalledWith(expect.objectContaining({ id: "issue-1" }));
+  });
+
+  it("多个问题时显示「全部接受」并调用 replaceAll", async () => {
+    state.activeIssues = [createIssue(), createIssue({ id: "issue-2", start: 8, end: 10 })];
+    renderReviewInto(view());
+
+    const button = view().querySelector<HTMLButtonElement>("[data-role='accept-all']")!;
+    expect(button).not.toBeNull();
+    button.click();
+    await Promise.resolve();
+
+    expect(state.actions!.replaceAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("只有一个问题时不显示「全部接受」", () => {
+    renderReviewInto(view());
+    expect(view().querySelector("[data-role='accept-all']")).toBeNull();
+  });
+
+  it("复杂编辑器无法替换时「全部接受」禁用", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<p>软件</p><p>视频</p>";
+    Object.defineProperty(editor, "isContentEditable", { value: true });
+    state.activeElement = editor;
+    state.activeIssues = [createIssue(), createIssue({ id: "issue-2", start: 8, end: 10 })];
+    renderReviewInto(view());
+
+    expect(view().querySelector<HTMLButtonElement>("[data-role='accept-all']")!.disabled).toBe(true);
   });
 
   it("动作未注册时点击不报错", async () => {

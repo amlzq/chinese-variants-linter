@@ -10,6 +10,7 @@ import { ensureSettingsView, isSettingsViewOpen } from "../src/content/ui/settin
 import { ACTIVE_CLASS, ensureStyles } from "../src/content/ui/styles";
 import { ensureSuggestionPopover, hideSuggestionPopover, repositionSuggestionPopover, scheduleHideSuggestionPopover } from "../src/content/ui/suggestionPopover";
 import {
+  applyAllSuggestions,
   applyIssueSuggestion,
   convertText,
   getEditableText,
@@ -187,6 +188,18 @@ async function replaceIssue(issue: Issue): Promise<void> {
   const changed = applyIssueSuggestion(state.activeElement, issue, suggestion.value);
   if (changed) {
     ensureIgnoredSet(state.activeElement).delete(issue.id);
+    hideSuggestionPopover();
+    await detectActiveElement(true);
+  }
+}
+
+async function replaceAllIssues(): Promise<void> {
+  if (!state.activeElement) {
+    return;
+  }
+
+  const changed = applyAllSuggestions(state.activeElement, state.activeIssues);
+  if (changed > 0) {
     hideSuggestionPopover();
     await detectActiveElement(true);
   }
@@ -581,6 +594,7 @@ export default defineContentScript({
       replace: replaceIssue,
       ignore: ignoreIssue,
       allow: allowIssue,
+      replaceAll: replaceAllIssues,
     };
 
     document.addEventListener("focusin", onFocusIn, true);
