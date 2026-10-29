@@ -37,7 +37,7 @@ jobs:
       - name: 单元测试
         run: npm test
 
-      # 只验证能构建，不产出分发包；打 tag 时由 release.yml 打包并发布。
+      # 只验证能构建，不产出分发包；发版时在本地运行 npm run zip / zip:firefox 手动打包。
       - name: 构建 Chrome 与 Firefox
         run: |
           npm run build
