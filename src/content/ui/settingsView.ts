@@ -7,7 +7,6 @@ import {
   addForceRulePatch,
   allowTermsPatch,
   removeAllowTermPatch,
-  removeForceRulePatch,
 } from "../../shared/settingsHelpers";
 import {
   DEFAULT_SHORTCUTS,
@@ -20,6 +19,7 @@ import {
   type VariantCode,
 } from "../../shared/types";
 import { comboToString, eventToCombo, isModifierKey } from "../shortcuts";
+import { bindDictPageEvents, getDictPageMarkup, getDictPageTitle } from "./dictView";
 import { getMainPanelView, hideMainPanel, isMainPanelOpen, showReviewView } from "./mainPanel";
 import { SETTINGS_VIEW_ID } from "./styles";
 import { attachTooltip, hideTooltip } from "./tooltip";
@@ -27,6 +27,7 @@ import { attachTooltip, hideTooltip } from "./tooltip";
 let panel: HTMLDivElement | null = null;
 let currentSettings: ExtensionSettings | null = null;
 let recordingAction: ShortcutAction | null = null;
+let page: "settings" | "dict" = "settings";
 
 const VARIANTS = getSupportedVariants().map(
   (variant) => [variant, getVariantLabel(variant)] as [VariantCode, string],
@@ -73,15 +74,25 @@ export function ensureSettingsView(): HTMLDivElement {
     <div class="cvl-settings-body"></div>
   `;
 
-  // The settings view lives inside #cvl-main-panel; "back" returns to review,
-  // the close button closes the whole panel.
-  panel.querySelector<HTMLButtonElement>(".cvl-settings-back")?.addEventListener("click", showReviewView);
+  // The settings view lives inside #cvl-main-panel; "back" returns to the
+  // settings page from the dictionary list (otherwise to review), the close
+  // button closes the whole panel.
+  panel.querySelector<HTMLButtonElement>(".cvl-settings-back")?.addEventListener("click", goBack);
   panel.querySelector<HTMLButtonElement>(".cvl-settings-close")?.addEventListener("click", hideMainPanel);
   panel.querySelectorAll<HTMLButtonElement>(".cvl-settings-back, .cvl-settings-close").forEach((btn) => {
     attachTooltip(btn);
   });
 
   return panel;
+}
+
+function goBack(): void {
+  if (page === "dict") {
+    page = "settings";
+    renderSettingsView();
+    return;
+  }
+  showReviewView();
 }
 
 export function isSettingsViewOpen(): boolean {
@@ -91,6 +102,7 @@ export function isSettingsViewOpen(): boolean {
 export async function showSettingsView(): Promise<void> {
   currentSettings = await getSettings();
   recordingAction = null;
+  page = "settings";
   const view = ensureSettingsView();
   view.dataset.hidden = "false";
   renderSettingsView();
@@ -112,9 +124,18 @@ function renderSettingsView(): void {
     return;
   }
 
+  const title = view.querySelector<HTMLElement>(".cvl-settings-title");
+  if (title) {
+    title.textContent = page === "dict" ? getDictPageTitle() : t("settings.title");
+  }
+
   const scrollTop = body.scrollTop;
-  body.innerHTML = getBodyMarkup();
-  bindEvents(body);
+  body.innerHTML = page === "dict" ? getDictPageMarkup(currentSettings) : getBodyMarkup();
+  if (page === "dict") {
+    bindDictPageEvents(body, () => currentSettings, updateSettings);
+  } else {
+    bindEvents(body);
+  }
   body.scrollTop = scrollTop;
 }
 
@@ -310,8 +331,6 @@ function getDictionarySection(): string {
   const s = currentSettings!;
   const variant = s.defaultVariant;
   const allowTerms = s.userDictionary.allowTerms[variant] ?? [];
-  const forceRules = s.userDictionary.forceReplaceRules;
-
   return `
     <section class="cvl-settings-section">
       <div class="cvl-settings-section-head">
@@ -348,23 +367,10 @@ function getDictionarySection(): string {
           </select>
           <input class="cvl-settings-input" data-dict-input="forceFrom" placeholder="${t("settings.dict.forceFrom")}" />
           <input class="cvl-settings-input" data-dict-input="forceTo" placeholder="${t("settings.dict.forceTo")}" />
-          <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addForceRule">${t("settings.dict.forceAdd")}</button>
-        </div>
-        <div class="cvl-settings-rule-list">
-          ${forceRules.length === 0
-      ? `<span class="cvl-settings-empty">${t("settings.dict.forceEmpty")}</span>`
-      : forceRules.map((rule) => `
-              <div class="cvl-settings-rule-item">
-                <div class="cvl-settings-rule-text">
-                  <span class="cvl-settings-rule-variant">${getVariantLabel(rule.variant)}</span>
-                  <span class="cvl-settings-rule-from">${escapeHtml(rule.from)}</span>
-                  <span class="cvl-settings-rule-arrow">→</span>
-                  <span class="cvl-settings-rule-to">${escapeHtml(rule.to)}</span>
-                </div>
-                <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="removeForceRule" data-rule-id="${escapeHtml(rule.id)}">${t("settings.dict.forceDelete")}</button>
-              </div>
-            `).join("")
-    }
+          <div class="cvl-settings-force-actions">
+            <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addForceRule">${t("settings.dict.forceAdd")}</button>
+            <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="openDictList">${t("settings.dict.forceAll")}</button>
+          </div>
         </div>
       </div>
     </section>
@@ -519,14 +525,10 @@ function bindDictionaryEvents(body: HTMLElement): void {
     }
   });
 
-  body.querySelectorAll<HTMLButtonElement>("[data-dict-action='removeForceRule']").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.ruleId;
-      if (!id || !currentSettings) {
-        return;
-      }
-      await updateSettings(removeForceRulePatch(currentSettings, id));
-    });
+  body.querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")?.addEventListener("click", () => {
+    page = "dict";
+    body.scrollTop = 0;
+    renderSettingsView();
   });
 
   body.querySelectorAll<HTMLInputElement>("[data-dict-input]").forEach((input) => {
@@ -589,7 +591,7 @@ function onDocumentKeyDown(event: KeyboardEvent): void {
     if (recordingAction) {
       cancelRecording();
     } else {
-      showReviewView();
+      goBack();
     }
     return;
   }

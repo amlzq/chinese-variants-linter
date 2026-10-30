@@ -544,8 +544,19 @@
   margin-bottom: 8px;
 }
 
-.cvl-settings-view .cvl-settings-force-grid .cvl-settings-btn {
+.cvl-settings-view .cvl-settings-force-grid > .cvl-settings-btn {
   grid-column: span 2;
+  height: 36px;
+}
+
+.cvl-settings-view .cvl-settings-force-actions {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+
+.cvl-settings-view .cvl-settings-force-actions .cvl-settings-btn {
   height: 36px;
 }
 

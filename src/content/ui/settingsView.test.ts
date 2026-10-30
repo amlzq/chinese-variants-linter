@@ -202,8 +202,28 @@ describe("渲染设置项", () => {
     expect(body().querySelector("[data-dict-action='removeAllowTerm']")?.textContent).toContain(
       "軟體",
     );
+    // 规则列表不再出现在设置页，只在「全部」词典页展示
+    expect(body().querySelector(".cvl-settings-rule-from")).toBeNull();
+
+
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
     expect(body().querySelector(".cvl-settings-rule-from")?.textContent).toBe("视频");
     expect(body().querySelector(".cvl-settings-rule-to")?.textContent).toBe("影片");
+  });
+
+  it("词典页共用头部，返回回到设置页", async () => {
+    await showSettingsView();
+    const view = ensureSettingsView();
+    const title = () => view.querySelector(".cvl-settings-title")!.textContent;
+    const settingsTitle = title();
+
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
+    expect(title()).not.toBe(settingsTitle);
+    expect(body().querySelector("select[data-setting='defaultVariant']")).toBeNull();
+
+    view.querySelector<HTMLButtonElement>(".cvl-settings-back")!.click();
+    expect(title()).toBe(settingsTitle);
+    expect(body().querySelector("select[data-setting='defaultVariant']")).not.toBeNull();
   });
 
   it("字典为空时展示占位文案", async () => {
@@ -378,6 +398,7 @@ describe("字典编辑", () => {
       }),
     );
     await showSettingsView();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
     body().querySelector<HTMLButtonElement>("[data-dict-action='removeForceRule']")!.click();
     await flush();
 

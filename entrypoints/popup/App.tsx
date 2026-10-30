@@ -30,6 +30,7 @@ import {
   removeForceRulePatch,
 } from "../../src/shared/settingsHelpers";
 import "../../src/content/ui/settings.css";
+import { DictPage } from "./DictPage";
 
 const VARIANTS = getSupportedVariants().map(
   (variant) => [variant, getVariantLabel(variant)] as [VariantCode, string],
@@ -42,6 +43,7 @@ function App() {
   const [forceVariant, setForceVariant] = useState<VariantCode>("zh-TW");
   const [forceFrom, setForceFrom] = useState("");
   const [forceTo, setForceTo] = useState("");
+  const [page, setPage] = useState<"settings" | "dict">("settings");
 
   useEffect(() => {
     void browser.runtime.sendMessage({ type: "popup/get-state" }).then((result: PopupState) => {
@@ -192,6 +194,31 @@ function App() {
       <div className="cvl-settings-view">
         <div className="cvl-settings-body" style={{ padding: 16 }}>
           {t("popup.loading")}
+        </div>
+      </div>
+    );
+  }
+
+  if (page === "dict") {
+    return (
+      <div className="cvl-settings-view">
+        <div className="cvl-settings-header">
+          <button
+            className="cvl-settings-back"
+            type="button"
+            aria-label={t("settings.aria.back")}
+            title={t("settings.aria.back")}
+            onClick={() => setPage("settings")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h2 className="cvl-settings-title">{t("settings.dict.forceTitle")}</h2>
+        </div>
+
+        <div className="cvl-settings-body">
+          <DictPage rules={forceRules} onRemove={(id) => void removeForceRule(id)} />
         </div>
       </div>
     );
@@ -393,34 +420,20 @@ function App() {
                 onChange={(event) => setForceTo(event.target.value)}
                 placeholder={t("settings.dict.forceTo")}
               />
-              <button
-                className="cvl-settings-btn cvl-settings-btn-sm"
-                type="button"
-                onClick={() => void addForceRule()}>
-                {t("settings.dict.forceAdd")}
-              </button>
-            </div>
-            <div className="cvl-settings-rule-list">
-              {forceRules.length === 0 ? (
-                <span className="cvl-settings-empty">{t("settings.dict.forceEmpty")}</span>
-              ) : (
-                forceRules.map((rule) => (
-                  <div key={rule.id} className="cvl-settings-rule-item">
-                    <div className="cvl-settings-rule-text">
-                      <span className="cvl-settings-rule-variant">{getVariantLabel(rule.variant)}</span>
-                      <span className="cvl-settings-rule-from">{rule.from}</span>
-                      <span className="cvl-settings-rule-arrow">→</span>
-                      <span className="cvl-settings-rule-to">{rule.to}</span>
-                    </div>
-                    <button
-                      className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
-                      type="button"
-                      onClick={() => void removeForceRule(rule.id)}>
-                      {t("settings.dict.forceDelete")}
-                    </button>
-                  </div>
-                ))
-              )}
+              <div className="cvl-settings-force-actions">
+                <button
+                  className="cvl-settings-btn cvl-settings-btn-sm"
+                  type="button"
+                  onClick={() => void addForceRule()}>
+                  {t("settings.dict.forceAdd")}
+                </button>
+                <button
+                  className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
+                  type="button"
+                  onClick={() => setPage("dict")}>
+                  {t("settings.dict.forceAll")}
+                </button>
+              </div>
             </div>
           </div>
         </section>
