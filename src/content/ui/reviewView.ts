@@ -187,6 +187,7 @@ function getIssueCardMarkup(issue: Issue, index: number, total: number): string 
         <button class="cvl-review-action-btn cvl-review-action-accept" type="button" data-action="replace" ${replaceDisabled ? "disabled" : ""}>
           ${t("review.accept")}
         </button>
+        ${total > 1 ? getAcceptAllMarkup() : ""}
         <button class="cvl-review-action-btn cvl-review-action-dismiss" type="button" data-action="ignore">${t("review.dismiss")}</button>
         <button class="cvl-review-icon-action" type="button" data-action="allow" aria-label="${t("popover.allow")}" data-tooltip="${t("popover.allow")}">${getDictionaryIconMarkup()}</button>
         <div class="cvl-review-nav-arrows">
@@ -231,7 +232,6 @@ export function renderReviewInto(panel: HTMLDivElement): void {
       <div class="cvl-review-title-row">
         <h2 class="cvl-review-title">${t("review.title")}</h2>
         <span class="cvl-review-count">${errorCount}</span>
-        ${errorCount > 1 ? getAcceptAllMarkup() : ""}
       </div>
       <div class="cvl-review-card-wrap">
         ${getIssueCardMarkup(issue, currentIndex, errorCount)}

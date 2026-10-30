@@ -741,10 +741,9 @@ export function ensureStyles(): void {
     }
 
     #${REVIEW_VIEW_ID} .cvl-review-accept-all {
-      margin-left: auto;
       border: 0;
       border-radius: 8px;
-      padding: 5px 12px;
+      padding: 7px 14px;
       font: inherit;
       font-size: 12px;
       font-weight: 600;
