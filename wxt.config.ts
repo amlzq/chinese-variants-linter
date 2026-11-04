@@ -3,6 +3,11 @@ import { buildThirdPartyNotices } from "./scripts/third-party-notices";
 
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
+  // 开发服务固定在 4173，兼作静态服务：npm run dev 后可直接访问
+  // http://localhost:4173/docs/manual-validation.html，无需另起 http.server。
+  dev: {
+    server: { port: 4173 },
+  },
   // WXT 默认将 Firefox 目标回退到 MV2；显式固定为 MV3，确保各发布包
   // 使用相同的权限和后台脚本模型。
   manifestVersion: 3,
