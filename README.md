@@ -2,6 +2,12 @@
 
 扩展在本地处理文本，适用于内容编辑、客服话术、表单填写和跨地区发布前的中文校对。
 
+## 安装
+
+- [Chrome 网上应用店](https://chromewebstore.google.com/detail/chinese-variants-linter/phnegnjebgcgjhdjedbpnejfplbfflbb)
+- [Microsoft Edge 加载项](https://microsoftedge.microsoft.com/addons/detail/chinese-variants-linter/nbdholbmndoilmlepmgmfnnmoimcfibg)
+- [Firefox 附加组件](https://addons.mozilla.org/en-US/firefox/addon/chinese-variants-linter/)
+
 ## 功能
 
 - 支持简体中文、中文（台湾）、中文（香港）和繁体中文四种目标地区用语。
@@ -13,7 +19,7 @@
 - 用户设置与词库保存于浏览器本地存储。
 - 提供英文、简体中文、中文（台湾）和中文（香港）界面。
 
-## 安装与开发
+## 开发
 
 本项目使用 [WXT](https://wxt.dev/) 和 React 开发，需要 Node.js 20 或更高版本。
 
