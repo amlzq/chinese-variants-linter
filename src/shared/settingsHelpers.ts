@@ -10,29 +10,29 @@ import type {
  * 返回空对象 `{}` 表示无需变更（调用方应据此跳过写入）。
  */
 
-export function allowTermsPatch(settings: ExtensionSettings, term: string): ExtensionSettingsPatch {
+export function allowPhrasesPatch(settings: ExtensionSettings, term: string): ExtensionSettingsPatch {
   const variant = settings.defaultVariant;
-  const terms = settings.userDictionary.allowTerms[variant] ?? [];
+  const terms = settings.userDictionary.allowPhrases[variant] ?? [];
   const next = term.trim();
   if (!next || terms.includes(next)) {
     return {};
   }
   return {
     userDictionary: {
-      allowTerms: { [variant]: Array.from(new Set([...terms, next])) },
+      allowPhrases: { [variant]: Array.from(new Set([...terms, next])) },
     },
   };
 }
 
-export function removeAllowTermPatch(
+export function removeAllowPhrasePatch(
   settings: ExtensionSettings,
   term: string,
 ): ExtensionSettingsPatch {
   const variant = settings.defaultVariant;
-  const terms = settings.userDictionary.allowTerms[variant] ?? [];
+  const terms = settings.userDictionary.allowPhrases[variant] ?? [];
   return {
     userDictionary: {
-      allowTerms: { [variant]: terms.filter((t) => t !== term) },
+      allowPhrases: { [variant]: terms.filter((t) => t !== term) },
     },
   };
 }

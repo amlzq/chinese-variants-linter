@@ -45,7 +45,7 @@ function buildUserTermRules(
 
 export interface RuleBundle {
   termRules: VariantTermRule[];
-  allowTerms: Set<string>;
+  allowPhrases: Set<string>;
 }
 
 export function loadRuleBundle(
@@ -59,6 +59,6 @@ export function loadRuleBundle(
 
   return {
     termRules: [...userTermRules, ...builtinTermRules],
-    allowTerms: new Set(settings.userDictionary.allowTerms[targetVariant]),
+    allowPhrases: new Set(settings.userDictionary.allowPhrases[targetVariant]),
   };
 }

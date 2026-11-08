@@ -17,7 +17,7 @@ export const VARIANT_LABELS: Record<VariantCode, string> = {
 };
 
 export const DEFAULT_USER_DICTIONARY: UserDictionary = {
-  allowTerms: {
+  allowPhrases: {
     "zh-CN": [],
     "zh-TW": [],
     "zh-HK": [],
@@ -64,7 +64,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 };
 
 const VARIANT_CODES: readonly VariantCode[] = ["zh-CN", "zh-TW", "zh-HK", "zh-Hant"];
-const MAX_DICTIONARY_TERMS = 1000;
+const MAX_ALLOW_PHRASES = 1000;
 const MAX_DICTIONARY_PHRASES = 1000;
 
 /**
@@ -89,20 +89,27 @@ function coerceStringList(input: unknown): string[] {
     }
     seen.add(trimmed);
     out.push(trimmed);
-    if (out.length >= MAX_DICTIONARY_TERMS) {
+    if (out.length >= MAX_ALLOW_PHRASES) {
       break;
     }
   }
   return out;
 }
 
-function normalizeAllowTerms(dictionary?: Partial<UserDictionary>): UserDictionary["allowTerms"] {
-  return {
-    "zh-CN": coerceStringList(dictionary?.allowTerms?.["zh-CN"]),
-    "zh-TW": coerceStringList(dictionary?.allowTerms?.["zh-TW"]),
-    "zh-HK": coerceStringList(dictionary?.allowTerms?.["zh-HK"]),
-    "zh-Hant": coerceStringList(dictionary?.allowTerms?.["zh-Hant"]),
+/**
+ * 归一化允许词组，并迁移旧版 `allowTerms`：新版 `allowPhrases` 中未出现的变体
+ * 才读取旧字段；迁移后旧字段不再写回。
+ */
+function normalizeAllowPhrases(dictionary?: unknown): UserDictionary["allowPhrases"] {
+  const source = (dictionary ?? {}) as {
+    allowPhrases?: Partial<Record<VariantCode, unknown>>;
+    allowTerms?: Partial<Record<VariantCode, unknown>>;
   };
+  const out = {} as UserDictionary["allowPhrases"];
+  for (const variant of VARIANT_CODES) {
+    out[variant] = coerceStringList(source.allowPhrases?.[variant] ?? source.allowTerms?.[variant]);
+  }
+  return out;
 }
 
 /**
@@ -177,7 +184,7 @@ export function normalizeSettings(settings?: Partial<ExtensionSettings> | null):
     defaultSiteEnabled: settings?.defaultSiteEnabled ?? DEFAULT_SETTINGS.defaultSiteEnabled,
     siteEnabledMap: settings?.siteEnabledMap ?? {},
     userDictionary: {
-      allowTerms: normalizeAllowTerms(settings?.userDictionary),
+      allowPhrases: normalizeAllowPhrases(settings?.userDictionary),
       phrases: normalizePhrases(settings?.userDictionary),
     },
     showOnSelection: settings?.showOnSelection ?? DEFAULT_SETTINGS.showOnSelection,
@@ -197,9 +204,9 @@ export function mergeSettings(
       ...(patch.siteEnabledMap ?? {}),
     },
     userDictionary: {
-      allowTerms: {
-        ...current.userDictionary.allowTerms,
-        ...(patch.userDictionary?.allowTerms ?? {}),
+      allowPhrases: {
+        ...current.userDictionary.allowPhrases,
+        ...(patch.userDictionary?.allowPhrases ?? {}),
       },
       phrases: {
         ...current.userDictionary.phrases,

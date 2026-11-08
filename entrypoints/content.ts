@@ -216,9 +216,9 @@ async function ignoreIssue(issue: Issue): Promise<void> {
 }
 
 async function allowIssue(issue: Issue): Promise<void> {
-  const nextAllowTerms = Array.from(
+  const nextAllowPhrases = Array.from(
     new Set([
-      ...settings.userDictionary.allowTerms[settings.defaultVariant],
+      ...settings.userDictionary.allowPhrases[settings.defaultVariant],
       issue.sourceText,
     ]),
   );
@@ -227,8 +227,8 @@ async function allowIssue(issue: Issue): Promise<void> {
     type: "settings/update",
     patch: {
       userDictionary: {
-        allowTerms: {
-          [settings.defaultVariant]: nextAllowTerms,
+        allowPhrases: {
+          [settings.defaultVariant]: nextAllowPhrases,
         },
       },
     },

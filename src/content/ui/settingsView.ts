@@ -5,8 +5,8 @@ import { getShortcutActionLabel, getVariantLabel, t } from "../../shared/locale"
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../shared/settingsClient";
 import {
   addPhrasePatch,
-  allowTermsPatch,
-  removeAllowTermPatch,
+  allowPhrasesPatch,
+  removeAllowPhrasePatch,
 } from "../../shared/settingsHelpers";
 import {
   DEFAULT_SHORTCUTS,
@@ -330,7 +330,7 @@ function getSitesSection(): string {
 function getDictionarySection(): string {
   const s = currentSettings!;
   const variant = s.defaultVariant;
-  const allowTerms = s.userDictionary.allowTerms[variant] ?? [];
+  const allowPhrases = s.userDictionary.allowPhrases[variant] ?? [];
   return `
     <section class="cvl-settings-section">
       <div class="cvl-settings-section-head">
@@ -342,14 +342,14 @@ function getDictionarySection(): string {
         <div class="cvl-settings-dict-subhead">${t("settings.dict.allowTitle")}</div>
         <p class="cvl-settings-empty" style="margin-bottom: 8px;">${t("settings.dict.allowDesc")}</p>
         <div class="cvl-settings-inline-form">
-          <input class="cvl-settings-input" data-dict-input="allowTerm" placeholder="${t("settings.dict.allowPlaceholder")}" />
-          <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addAllowTerm">${t("settings.dict.allowAdd")}</button>
+          <input class="cvl-settings-input" data-dict-input="allowPhrase" placeholder="${t("settings.dict.allowPlaceholder")}" />
+          <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addAllowPhrase">${t("settings.dict.allowAdd")}</button>
         </div>
         <div class="cvl-settings-tag-list">
-          ${allowTerms.length === 0
+          ${allowPhrases.length === 0
       ? `<span class="cvl-settings-empty">${t("settings.dict.allowEmpty")}</span>`
-      : allowTerms.map((term) => `
-              <button class="cvl-settings-tag" data-dict-action="removeAllowTerm" data-term="${escapeHtml(term)}">${escapeHtml(term)} ×</button>
+      : allowPhrases.map((term) => `
+              <button class="cvl-settings-tag" data-dict-action="removeAllowPhrase" data-term="${escapeHtml(term)}">${escapeHtml(term)} ×</button>
             `).join("")
     }
         </div>
@@ -481,25 +481,25 @@ function bindSiteEvents(body: HTMLElement): void {
 }
 
 function bindDictionaryEvents(body: HTMLElement): void {
-  body.querySelector<HTMLButtonElement>("[data-dict-action='addAllowTerm']")?.addEventListener("click", async () => {
-    const input = body.querySelector<HTMLInputElement>("[data-dict-input='allowTerm']");
+  body.querySelector<HTMLButtonElement>("[data-dict-action='addAllowPhrase']")?.addEventListener("click", async () => {
+    const input = body.querySelector<HTMLInputElement>("[data-dict-input='allowPhrase']");
     const term = input?.value.trim();
     if (!term || !currentSettings) {
       return;
     }
-    const patch = allowTermsPatch(currentSettings, term);
+    const patch = allowPhrasesPatch(currentSettings, term);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
   });
 
-  body.querySelectorAll<HTMLButtonElement>("[data-dict-action='removeAllowTerm']").forEach((btn) => {
+  body.querySelectorAll<HTMLButtonElement>("[data-dict-action='removeAllowPhrase']").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const term = btn.dataset.term;
       if (!term || !currentSettings) {
         return;
       }
-      await updateSettings(removeAllowTermPatch(currentSettings, term));
+      await updateSettings(removeAllowPhrasePatch(currentSettings, term));
     });
   });
 
@@ -528,8 +528,8 @@ function bindDictionaryEvents(body: HTMLElement): void {
       if (event.key === "Enter") {
         event.preventDefault();
         const name = input.dataset.dictInput;
-        if (name === "allowTerm") {
-          body.querySelector<HTMLButtonElement>("[data-dict-action='addAllowTerm']")?.click();
+        if (name === "allowPhrase") {
+          body.querySelector<HTMLButtonElement>("[data-dict-action='addAllowPhrase']")?.click();
         } else if (name === "phraseFrom" || name === "phraseTo") {
           body.querySelector<HTMLButtonElement>("[data-dict-action='addPhrase']")?.click();
         }

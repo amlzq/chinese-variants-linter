@@ -37,10 +37,10 @@ function stubStorage(initial: Record<string, unknown> = {}) {
 }
 
 describe("normalizeSettings - 纵深防御", () => {
-  it("丢弃 allowTerms 中的非字符串 / 空白项并去重", () => {
+  it("丢弃 allowPhrases 中的非字符串 / 空白项并去重", () => {
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: {
+        allowPhrases: {
           "zh-CN": [" foo ", "foo", 123, "", " bar ", null, "foo"] as unknown as string[],
           "zh-TW": [],
           "zh-HK": [],
@@ -49,23 +49,23 @@ describe("normalizeSettings - 纵深防御", () => {
         phrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
       },
     });
-    expect(settings.userDictionary.allowTerms["zh-CN"]).toEqual(["foo", "bar"]);
+    expect(settings.userDictionary.allowPhrases["zh-CN"]).toEqual(["foo", "bar"]);
   });
 
-  it("allowTerms 为非数组时被忽略而非抛错", () => {
+  it("allowPhrases 为非数组时被忽略而非抛错", () => {
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: { "zh-CN": "not-an-array" } as unknown as UserDictionary["allowTerms"],
+        allowPhrases: { "zh-CN": "not-an-array" } as unknown as UserDictionary["allowPhrases"],
         phrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
       },
     });
-    expect(settings.userDictionary.allowTerms["zh-CN"]).toEqual([]);
+    expect(settings.userDictionary.allowPhrases["zh-CN"]).toEqual([]);
   });
 
   it("phrases 仅保留 from 非空且类型正确的条目", () => {
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
+        allowPhrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         phrases: {
           "zh-TW": [
             { id: "1", from: " 你好 ", to: " 妳好 ", enabled: true },
@@ -123,9 +123,21 @@ describe("normalizeSettings - 纵深防御", () => {
     expect(settings.userDictionary.phrases["zh-TW"].map((p) => p.id)).toEqual(["new"]);
   });
 
+  it("迁移旧版 allowTerms，已有 allowPhrases 的变体不被覆盖", () => {
+    const settings = normalizeSettings({
+      userDictionary: {
+        allowTerms: { "zh-TW": ["軟體"], "zh-HK": ["軟件"] },
+        allowPhrases: { "zh-HK": ["新"] },
+      } as unknown as UserDictionary,
+    });
+    expect(settings.userDictionary.allowPhrases["zh-TW"]).toEqual(["軟體"]);
+    expect(settings.userDictionary.allowPhrases["zh-HK"]).toEqual(["新"]);
+    expect("allowTerms" in settings.userDictionary).toBe(false);
+  });
+
   it("未提供 userDictionary 时返回空字典", () => {
     const settings = normalizeSettings({});
-    expect(settings.userDictionary.allowTerms["zh-CN"]).toEqual([]);
+    expect(settings.userDictionary.allowPhrases["zh-CN"]).toEqual([]);
     expect(settings.userDictionary.phrases["zh-TW"]).toEqual([]);
   });
 
@@ -150,7 +162,7 @@ describe("normalizeSettings - 纵深防御", () => {
   it("phrases 缺少 id 时生成稳定回退 id，enabled 默认开启", () => {
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
+        allowPhrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         phrases: {
           "zh-TW": [{ from: "视频", to: "影片" } as CustomPhrase],
         },
@@ -171,15 +183,15 @@ describe("mergeSettings", () => {
     expect(next.siteEnabledMap).toEqual({ "a.com": true, "b.com": false });
   });
 
-  it("深层合并 allowTerms，保留其它变体已有词", () => {
+  it("深层合并 allowPhrases，保留其它变体已有词", () => {
     const current = mergeSettings(DEFAULT_SETTINGS, {
-      userDictionary: { allowTerms: { "zh-TW": ["滑鼠"], "zh-CN": ["软件"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["滑鼠"], "zh-CN": ["软件"] } },
     });
     const next = mergeSettings(current, {
-      userDictionary: { allowTerms: { "zh-TW": ["滑鼠", "軟體"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["滑鼠", "軟體"] } },
     });
-    expect(next.userDictionary.allowTerms["zh-TW"]).toEqual(["滑鼠", "軟體"]);
-    expect(next.userDictionary.allowTerms["zh-CN"]).toEqual(["软件"]);
+    expect(next.userDictionary.allowPhrases["zh-TW"]).toEqual(["滑鼠", "軟體"]);
+    expect(next.userDictionary.allowPhrases["zh-CN"]).toEqual(["软件"]);
   });
 
   it("phrases 补丁只替换对应变体，其余保留", () => {
@@ -243,7 +255,7 @@ describe("持久化读写", () => {
         enabled: false,
         defaultVariant: "zh-HK",
         userDictionary: {
-          allowTerms: { "zh-HK": [" foo ", "foo"] },
+          allowPhrases: { "zh-HK": [" foo ", "foo"] },
           phrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         },
       },
@@ -252,7 +264,7 @@ describe("持久化读写", () => {
     const settings = await getSettings();
     expect(settings.enabled).toBe(false);
     expect(settings.defaultVariant).toBe("zh-HK");
-    expect(settings.userDictionary.allowTerms["zh-HK"]).toEqual(["foo"]);
+    expect(settings.userDictionary.allowPhrases["zh-HK"]).toEqual(["foo"]);
   });
 
   it("存储为空时返回默认设置", async () => {
@@ -267,14 +279,14 @@ describe("持久化读写", () => {
     await saveSettings({
       ...DEFAULT_SETTINGS,
       userDictionary: {
-        allowTerms: { "zh-CN": [" 词 "], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
+        allowPhrases: { "zh-CN": [" 词 "], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         phrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
       },
     });
 
     expect(local.set).toHaveBeenCalledTimes(1);
     const saved = store.get(STORAGE_KEY) as ExtensionSettings;
-    expect(saved.userDictionary.allowTerms["zh-CN"]).toEqual(["词"]);
+    expect(saved.userDictionary.allowPhrases["zh-CN"]).toEqual(["词"]);
   });
 
   it("updateSettings 读取当前值后合并补丁", async () => {
@@ -298,12 +310,12 @@ describe("normalizeSettings - 数量上限", () => {
     const terms = Array.from({ length: 1010 }, (_, index) => `词${index}`);
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: { "zh-CN": terms, "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
+        allowPhrases: { "zh-CN": terms, "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         phrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
       },
     });
 
-    expect(settings.userDictionary.allowTerms["zh-CN"]).toHaveLength(1000);
+    expect(settings.userDictionary.allowPhrases["zh-CN"]).toHaveLength(1000);
   });
 
   it("自定义词组超过上限时截断", () => {
@@ -315,7 +327,7 @@ describe("normalizeSettings - 数量上限", () => {
     }));
     const settings = normalizeSettings({
       userDictionary: {
-        allowTerms: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
+        allowPhrases: { "zh-CN": [], "zh-TW": [], "zh-HK": [], "zh-Hant": [] },
         phrases: { "zh-TW": rules },
       } as unknown as UserDictionary,
     });

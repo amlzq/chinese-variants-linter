@@ -25,8 +25,8 @@ import {
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../src/shared/settingsClient";
 import {
   addPhrasePatch,
-  allowTermsPatch,
-  removeAllowTermPatch,
+  allowPhrasesPatch,
+  removeAllowPhrasePatch,
   removePhrasePatch,
 } from "../../src/shared/settingsHelpers";
 import "../../src/content/ui/settings.css";
@@ -39,7 +39,7 @@ const VARIANTS = getSupportedVariants().map(
 function App() {
   const [popupState, setPopupState] = useState<PopupState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newAllowTerm, setNewAllowTerm] = useState("");
+  const [newAllowPhrase, setNewAllowPhrase] = useState("");
   const [phraseFrom, setPhraseFrom] = useState("");
   const [phraseTo, setPhraseTo] = useState("");
   const [page, setPage] = useState<"settings" | "dict">("settings");
@@ -53,12 +53,12 @@ function App() {
 
   const settings = popupState?.settings;
   setRegion(detectDefaultRegion());
-  const allowTerms = useMemo(() => {
+  const allowPhrases = useMemo(() => {
     if (!settings) {
       return [];
     }
 
-    return settings.userDictionary.allowTerms[settings.defaultVariant] ?? [];
+    return settings.userDictionary.allowPhrases[settings.defaultVariant] ?? [];
   }, [settings]);
   const phrases = settings ? settings.userDictionary.phrases[settings.defaultVariant] ?? [] : [];
 
@@ -94,24 +94,24 @@ function App() {
     );
   }
 
-  async function addAllowTerm(): Promise<void> {
-    if (!settings || !newAllowTerm.trim()) {
+  async function addAllowPhrase(): Promise<void> {
+    if (!settings || !newAllowPhrase.trim()) {
       return;
     }
 
-    const patch = allowTermsPatch(settings, newAllowTerm);
+    const patch = allowPhrasesPatch(settings, newAllowPhrase);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
-    setNewAllowTerm("");
+    setNewAllowPhrase("");
   }
 
-  async function removeAllowTerm(term: string): Promise<void> {
+  async function removeAllowPhrase(term: string): Promise<void> {
     if (!settings) {
       return;
     }
 
-    await updateSettings(removeAllowTermPatch(settings, term));
+    await updateSettings(removeAllowPhrasePatch(settings, term));
   }
 
   async function addPhrase(): Promise<void> {
@@ -356,32 +356,32 @@ function App() {
             <div className="cvl-settings-inline-form">
               <input
                 className="cvl-settings-input"
-                value={newAllowTerm}
-                onChange={(event) => setNewAllowTerm(event.target.value)}
+                value={newAllowPhrase}
+                onChange={(event) => setNewAllowPhrase(event.target.value)}
                 placeholder={t("settings.dict.allowPlaceholder")}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    void addAllowTerm();
+                    void addAllowPhrase();
                   }
                 }}
               />
               <button
                 className="cvl-settings-btn cvl-settings-btn-sm"
                 type="button"
-                onClick={() => void addAllowTerm()}>
+                onClick={() => void addAllowPhrase()}>
                 {t("settings.dict.allowAdd")}
               </button>
             </div>
             <div className="cvl-settings-tag-list">
-              {allowTerms.length === 0 ? (
+              {allowPhrases.length === 0 ? (
                 <span className="cvl-settings-empty">{t("settings.dict.allowEmpty")}</span>
               ) : (
-                allowTerms.map((term) => (
+                allowPhrases.map((term) => (
                   <button
                     key={term}
                     className="cvl-settings-tag"
                     type="button"
-                    onClick={() => void removeAllowTerm(term)}>
+                    onClick={() => void removeAllowPhrase(term)}>
                     {term} ×
                   </button>
                 ))

@@ -60,7 +60,7 @@ describe("detectText", () => {
       defaultVariant: "zh-TW",
       detectionLevel: "standard",
       userDictionary: {
-        allowTerms: {
+        allowPhrases: {
           "zh-TW": ["软件"],
         },
       },
@@ -167,7 +167,7 @@ describe("detectText", () => {
       defaultVariant: "zh-TW",
       detectionLevel: "relaxed",
       userDictionary: {
-        allowTerms: { "zh-TW": ["软件"] },
+        allowPhrases: { "zh-TW": ["软件"] },
       },
     });
     expect(detectText({ text: "软件", settings })).toEqual([]);

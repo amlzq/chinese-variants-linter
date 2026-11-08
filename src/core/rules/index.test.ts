@@ -17,7 +17,7 @@ describe("rules", () => {
   it("loadRuleBundle 返回非空的内置规则包", () => {
     const bundle = loadRuleBundle(DEFAULT_SETTINGS, "zh-TW");
     expect(Array.isArray(bundle.termRules)).toBe(true);
-    expect(bundle.allowTerms instanceof Set).toBe(true);
+    expect(bundle.allowPhrases instanceof Set).toBe(true);
   });
 
   it("loadRuleBundle 只保留目标变体有映射的规则", () => {
@@ -63,9 +63,9 @@ describe("rules", () => {
 
   it("loadRuleBundle 按目标变体收集允许词", () => {
     const settings = mergeSettings(DEFAULT_SETTINGS, {
-      userDictionary: { allowTerms: { "zh-TW": ["軟體"], "zh-HK": ["軟件"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["軟體"], "zh-HK": ["軟件"] } },
     });
-    expect(loadRuleBundle(settings, "zh-TW").allowTerms.has("軟體")).toBe(true);
-    expect(loadRuleBundle(settings, "zh-TW").allowTerms.has("軟件")).toBe(false);
+    expect(loadRuleBundle(settings, "zh-TW").allowPhrases.has("軟體")).toBe(true);
+    expect(loadRuleBundle(settings, "zh-TW").allowPhrases.has("軟件")).toBe(false);
   });
 });

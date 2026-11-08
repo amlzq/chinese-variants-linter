@@ -491,7 +491,7 @@ describe("正文动作", () => {
     await vi.advanceTimersByTimeAsync(0);
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(currentSettings.userDictionary.allowTerms["zh-TW"]).toContain("软件");
+    expect(currentSettings.userDictionary.allowPhrases["zh-TW"]).toContain("软件");
     expect(state.activeIssues).toEqual([]);
   });
 

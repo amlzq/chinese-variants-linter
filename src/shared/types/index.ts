@@ -37,7 +37,7 @@ export interface CustomPhrase {
 }
 
 export interface UserDictionary {
-    allowTerms: Record<VariantCode, string[]>;
+    allowPhrases: Record<VariantCode, string[]>;
     phrases: Record<VariantCode, CustomPhrase[]>;
 }
 
@@ -89,7 +89,7 @@ export interface ExtensionSettingsPatch {
     defaultSiteEnabled?: boolean;
     siteEnabledMap?: Record<string, boolean>;
     userDictionary?: {
-        allowTerms?: Partial<Record<VariantCode, string[]>>;
+        allowPhrases?: Partial<Record<VariantCode, string[]>>;
         phrases?: Partial<Record<VariantCode, CustomPhrase[]>>;
     };
     showOnSelection?: boolean;

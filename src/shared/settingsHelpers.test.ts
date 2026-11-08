@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../core/storage";
 import {
   addPhrasePatch,
-  allowTermsPatch,
-  removeAllowTermPatch,
+  allowPhrasesPatch,
+  removeAllowPhrasePatch,
   removePhrasePatch,
 } from "./settingsHelpers";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "./types";
@@ -12,41 +12,41 @@ function createSettings(patch: ExtensionSettingsPatch = {}): ExtensionSettings {
   return mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW", ...patch });
 }
 
-describe("allowTermsPatch", () => {
+describe("allowPhrasesPatch", () => {
   it("向当前目标变体追加去除空白后的允许词", () => {
-    const patch = allowTermsPatch(createSettings(), "  軟體  ");
-    expect(patch.userDictionary?.allowTerms?.["zh-TW"]).toEqual(["軟體"]);
+    const patch = allowPhrasesPatch(createSettings(), "  軟體  ");
+    expect(patch.userDictionary?.allowPhrases?.["zh-TW"]).toEqual(["軟體"]);
   });
 
   it("保留已有允许词并去重", () => {
     const settings = createSettings({
-      userDictionary: { allowTerms: { "zh-TW": ["軟體", "滑鼠"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["軟體", "滑鼠"] } },
     });
-    const patch = allowTermsPatch(settings, "滑鼠");
+    const patch = allowPhrasesPatch(settings, "滑鼠");
     expect(patch).toEqual({});
   });
 
   it("空词或纯空白返回空补丁", () => {
-    expect(allowTermsPatch(createSettings(), "")).toEqual({});
-    expect(allowTermsPatch(createSettings(), "   ")).toEqual({});
+    expect(allowPhrasesPatch(createSettings(), "")).toEqual({});
+    expect(allowPhrasesPatch(createSettings(), "   ")).toEqual({});
   });
 });
 
-describe("removeAllowTermPatch", () => {
+describe("removeAllowPhrasePatch", () => {
   it("仅移除指定词，保留其余词", () => {
     const settings = createSettings({
-      userDictionary: { allowTerms: { "zh-TW": ["軟體", "滑鼠"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["軟體", "滑鼠"] } },
     });
-    const patch = removeAllowTermPatch(settings, "軟體");
-    expect(patch.userDictionary?.allowTerms?.["zh-TW"]).toEqual(["滑鼠"]);
+    const patch = removeAllowPhrasePatch(settings, "軟體");
+    expect(patch.userDictionary?.allowPhrases?.["zh-TW"]).toEqual(["滑鼠"]);
   });
 
   it("词不存在时列表保持不变", () => {
     const settings = createSettings({
-      userDictionary: { allowTerms: { "zh-TW": ["滑鼠"] } },
+      userDictionary: { allowPhrases: { "zh-TW": ["滑鼠"] } },
     });
-    const patch = removeAllowTermPatch(settings, "不存在");
-    expect(patch.userDictionary?.allowTerms?.["zh-TW"]).toEqual(["滑鼠"]);
+    const patch = removeAllowPhrasePatch(settings, "不存在");
+    expect(patch.userDictionary?.allowPhrases?.["zh-TW"]).toEqual(["滑鼠"]);
   });
 });
 

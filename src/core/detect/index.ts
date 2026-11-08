@@ -18,9 +18,9 @@ function isRangeCoveredByAllowedTerm(
   text: string,
   start: number,
   end: number,
-  allowTerms: Set<string>,
+  allowPhrases: Set<string>,
 ): boolean {
-  for (const term of allowTerms) {
+  for (const term of allowPhrases) {
     if (!term) {
       continue;
     }
@@ -165,7 +165,7 @@ function detectVariantTerms(
   text: string,
   targetVariant: VariantCode,
   rules: VariantTermRule[],
-  allowTerms: Set<string>,
+  allowPhrases: Set<string>,
   ignoredIssueIds: Set<string>,
 ): RankedIssue[] {
   const sortedRules = [...rules].sort((left, right) => {
@@ -180,7 +180,7 @@ function detectVariantTerms(
 
   for (const rule of sortedRules) {
     const replacement = rule.targets[targetVariant];
-    if (!replacement || replacement === rule.sourceTerm || allowTerms.has(rule.sourceTerm)) {
+    if (!replacement || replacement === rule.sourceTerm || allowPhrases.has(rule.sourceTerm)) {
       continue;
     }
 
@@ -212,14 +212,14 @@ function detectVariantTerms(
 function detectScriptIssues(
   text: string,
   targetVariant: VariantCode,
-  allowTerms: Set<string>,
+  allowPhrases: Set<string>,
   ignoredIssueIds: Set<string>,
 ): RankedIssue[] {
   return findScriptChanges(text, targetVariant)
     .filter(
       (change) =>
-        !allowTerms.has(change.source) &&
-        !isRangeCoveredByAllowedTerm(text, change.start, change.end, allowTerms),
+        !allowPhrases.has(change.source) &&
+        !isRangeCoveredByAllowedTerm(text, change.start, change.end, allowPhrases),
     )
     .map((change) => buildScriptIssue(change, targetVariant))
     .filter((rankedIssue) => !ignoredIssueIds.has(rankedIssue.issue.id));
@@ -239,7 +239,7 @@ export function detectText({ text, settings, ignoredIssueIds = [] }: DetectTextO
           text,
           settings.defaultVariant,
           bundle.termRules,
-          bundle.allowTerms,
+          bundle.allowPhrases,
           ignored,
         ),
       )
@@ -252,7 +252,7 @@ export function detectText({ text, settings, ignoredIssueIds = [] }: DetectTextO
     detectScriptIssues(
       text,
       settings.defaultVariant,
-      bundle.allowTerms,
+      bundle.allowPhrases,
       ignored,
     ),
   );

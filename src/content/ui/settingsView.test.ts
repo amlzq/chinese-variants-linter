@@ -190,7 +190,7 @@ describe("渲染设置项", () => {
     getSettingsMock.mockResolvedValue(
       buildSettings({
         userDictionary: {
-          allowTerms: { "zh-TW": ["軟體"] },
+          allowPhrases: { "zh-TW": ["軟體"] },
           phrases: {
             "zh-TW": [{ id: "rule-1", from: "视频", to: "影片", enabled: true }],
           },
@@ -199,7 +199,7 @@ describe("渲染设置项", () => {
     );
     await showSettingsView();
 
-    expect(body().querySelector("[data-dict-action='removeAllowTerm']")?.textContent).toContain(
+    expect(body().querySelector("[data-dict-action='removeAllowPhrase']")?.textContent).toContain(
       "軟體",
     );
     // 规则列表不再出现在设置页，只在「全部」词典页展示
@@ -229,7 +229,7 @@ describe("渲染设置项", () => {
   it("字典为空时展示占位文案", async () => {
     await showSettingsView();
     expect(body().querySelectorAll(".cvl-settings-empty").length).toBeGreaterThan(0);
-    expect(body().querySelector("[data-dict-action='removeAllowTerm']")).toBeNull();
+    expect(body().querySelector("[data-dict-action='removeAllowPhrase']")).toBeNull();
     expect(body().querySelector("[data-dict-action='removePhrase']")).toBeNull();
   });
 
@@ -305,15 +305,15 @@ describe("设置项变更", () => {
 describe("字典编辑", () => {
   it("点击按钮添加允许词", async () => {
     await showSettingsView();
-    const input = body().querySelector<HTMLInputElement>("[data-dict-input='allowTerm']")!;
+    const input = body().querySelector<HTMLInputElement>("[data-dict-input='allowPhrase']")!;
     input.value = " 滑鼠 ";
-    body().querySelector<HTMLButtonElement>("[data-dict-action='addAllowTerm']")!.click();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='addAllowPhrase']")!.click();
     await flush();
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         userDictionary: expect.objectContaining({
-          allowTerms: expect.objectContaining({ "zh-TW": ["滑鼠"] }),
+          allowPhrases: expect.objectContaining({ "zh-TW": ["滑鼠"] }),
         }),
       }),
     );
@@ -321,7 +321,7 @@ describe("字典编辑", () => {
 
   it("输入框回车添加允许词，空值忽略", async () => {
     await showSettingsView();
-    const input = body().querySelector<HTMLInputElement>("[data-dict-input='allowTerm']")!;
+    const input = body().querySelector<HTMLInputElement>("[data-dict-input='allowPhrase']")!;
 
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
     await flush();
@@ -335,16 +335,16 @@ describe("字典编辑", () => {
 
   it("点击标签移除允许词", async () => {
     getSettingsMock.mockResolvedValue(
-      buildSettings({ userDictionary: { allowTerms: { "zh-TW": ["軟體"] } } }),
+      buildSettings({ userDictionary: { allowPhrases: { "zh-TW": ["軟體"] } } }),
     );
     await showSettingsView();
-    body().querySelector<HTMLButtonElement>("[data-dict-action='removeAllowTerm']")!.click();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='removeAllowPhrase']")!.click();
     await flush();
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         userDictionary: expect.objectContaining({
-          allowTerms: expect.objectContaining({ "zh-TW": [] }),
+          allowPhrases: expect.objectContaining({ "zh-TW": [] }),
         }),
       }),
     );
