@@ -1,8 +1,7 @@
 import type {
   ExtensionSettings,
   ExtensionSettingsPatch,
-  ForceReplaceRule,
-  VariantCode,
+  CustomPhrase,
 } from "./types";
 
 /**
@@ -38,38 +37,40 @@ export function removeAllowTermPatch(
   };
 }
 
-export function addForceRulePatch(
+export function addPhrasePatch(
   settings: ExtensionSettings,
-  variant: VariantCode,
   from: string,
   to: string,
 ): ExtensionSettingsPatch {
+  const variant = settings.defaultVariant;
   const trimmedFrom = from.trim();
   const trimmedTo = to.trim();
   if (!trimmedFrom || !trimmedTo) {
     return {};
   }
-  const rule: ForceReplaceRule = {
-    id: `force-${Date.now()}`,
-    variant,
+  const phrase: CustomPhrase = {
+    id: `phrase-${Date.now()}`,
     from: trimmedFrom,
     to: trimmedTo,
     enabled: true,
   };
   return {
     userDictionary: {
-      forceReplaceRules: [...settings.userDictionary.forceReplaceRules, rule],
+      phrases: { [variant]: [...(settings.userDictionary.phrases[variant] ?? []), phrase] },
     },
   };
 }
 
-export function removeForceRulePatch(
+export function removePhrasePatch(
   settings: ExtensionSettings,
   id: string,
 ): ExtensionSettingsPatch {
+  const variant = settings.defaultVariant;
   return {
     userDictionary: {
-      forceReplaceRules: settings.userDictionary.forceReplaceRules.filter((r) => r.id !== id),
+      phrases: {
+        [variant]: (settings.userDictionary.phrases[variant] ?? []).filter((p) => p.id !== id),
+      },
     },
   };
 }

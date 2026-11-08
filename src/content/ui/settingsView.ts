@@ -4,7 +4,7 @@ import { escapeHtml } from "../../shared/dom";
 import { getShortcutActionLabel, getVariantLabel, t } from "../../shared/locale";
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../shared/settingsClient";
 import {
-  addForceRulePatch,
+  addPhrasePatch,
   allowTermsPatch,
   removeAllowTermPatch,
 } from "../../shared/settingsHelpers";
@@ -356,20 +356,14 @@ function getDictionarySection(): string {
       </div>
 
       <div class="cvl-settings-dict-subsection">
-        <div class="cvl-settings-dict-subhead">${t("settings.dict.forceTitle")}</div>
-        <p class="cvl-settings-empty" style="margin-bottom: 8px;">${t("settings.dict.forceDesc")}</p>
-        <div class="cvl-settings-force-grid">
-          <select class="cvl-settings-select" data-dict-input="forceVariant" style="grid-column: span 2;">
-            ${VARIANTS.map(
-      ([value, label]) =>
-        `<option value="${value}" ${value === variant ? "selected" : ""}>${label}</option>`,
-    ).join("")}
-          </select>
-          <input class="cvl-settings-input" data-dict-input="forceFrom" placeholder="${t("settings.dict.forceFrom")}" />
-          <input class="cvl-settings-input" data-dict-input="forceTo" placeholder="${t("settings.dict.forceTo")}" />
-          <div class="cvl-settings-force-actions">
-            <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addForceRule">${t("settings.dict.forceAdd")}</button>
-            <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="openDictList">${t("settings.dict.forceAll")}</button>
+        <div class="cvl-settings-dict-subhead">${t("settings.dict.phraseTitle")}</div>
+        <p class="cvl-settings-empty" style="margin-bottom: 8px;">${t("settings.dict.phraseDesc")}</p>
+        <div class="cvl-settings-phrase-grid">
+          <input class="cvl-settings-input" data-dict-input="phraseFrom" placeholder="${t("settings.dict.phraseFrom")}" />
+          <input class="cvl-settings-input" data-dict-input="phraseTo" placeholder="${t("settings.dict.phraseTo")}" />
+          <div class="cvl-settings-phrase-actions">
+            <button class="cvl-settings-btn cvl-settings-btn-sm" data-dict-action="addPhrase">${t("settings.dict.phraseAdd")}</button>
+            <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="openDictList">${t("settings.dict.phraseAll")}</button>
           </div>
         </div>
       </div>
@@ -509,17 +503,15 @@ function bindDictionaryEvents(body: HTMLElement): void {
     });
   });
 
-  body.querySelector<HTMLButtonElement>("[data-dict-action='addForceRule']")?.addEventListener("click", async () => {
-    const variantSelect = body.querySelector<HTMLSelectElement>("[data-dict-input='forceVariant']");
-    const fromInput = body.querySelector<HTMLInputElement>("[data-dict-input='forceFrom']");
-    const toInput = body.querySelector<HTMLInputElement>("[data-dict-input='forceTo']");
+  body.querySelector<HTMLButtonElement>("[data-dict-action='addPhrase']")?.addEventListener("click", async () => {
+    const fromInput = body.querySelector<HTMLInputElement>("[data-dict-input='phraseFrom']");
+    const toInput = body.querySelector<HTMLInputElement>("[data-dict-input='phraseTo']");
     const from = fromInput?.value.trim();
     const to = toInput?.value.trim();
-    const variant = (variantSelect?.value ?? currentSettings?.defaultVariant) as VariantCode;
-    if (!from || !to || !variant || !currentSettings) {
+    if (!from || !to || !currentSettings) {
       return;
     }
-    const patch = addForceRulePatch(currentSettings, variant, from, to);
+    const patch = addPhrasePatch(currentSettings, from, to);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
@@ -538,8 +530,8 @@ function bindDictionaryEvents(body: HTMLElement): void {
         const name = input.dataset.dictInput;
         if (name === "allowTerm") {
           body.querySelector<HTMLButtonElement>("[data-dict-action='addAllowTerm']")?.click();
-        } else if (name === "forceFrom" || name === "forceTo") {
-          body.querySelector<HTMLButtonElement>("[data-dict-action='addForceRule']")?.click();
+        } else if (name === "phraseFrom" || name === "phraseTo") {
+          body.querySelector<HTMLButtonElement>("[data-dict-action='addPhrase']")?.click();
         }
       }
     });

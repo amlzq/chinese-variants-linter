@@ -24,10 +24,10 @@ import {
 } from "../../src/shared/locale";
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../src/shared/settingsClient";
 import {
-  addForceRulePatch,
+  addPhrasePatch,
   allowTermsPatch,
   removeAllowTermPatch,
-  removeForceRulePatch,
+  removePhrasePatch,
 } from "../../src/shared/settingsHelpers";
 import "../../src/content/ui/settings.css";
 import { DictPage } from "./DictPage";
@@ -40,15 +40,13 @@ function App() {
   const [popupState, setPopupState] = useState<PopupState | null>(null);
   const [loading, setLoading] = useState(true);
   const [newAllowTerm, setNewAllowTerm] = useState("");
-  const [forceVariant, setForceVariant] = useState<VariantCode>("zh-TW");
-  const [forceFrom, setForceFrom] = useState("");
-  const [forceTo, setForceTo] = useState("");
+  const [phraseFrom, setPhraseFrom] = useState("");
+  const [phraseTo, setPhraseTo] = useState("");
   const [page, setPage] = useState<"settings" | "dict">("settings");
 
   useEffect(() => {
     void browser.runtime.sendMessage({ type: "popup/get-state" }).then((result: PopupState) => {
       setPopupState(result);
-      setForceVariant(result.settings.defaultVariant);
       setLoading(false);
     });
   }, []);
@@ -62,7 +60,7 @@ function App() {
 
     return settings.userDictionary.allowTerms[settings.defaultVariant] ?? [];
   }, [settings]);
-  const forceRules = settings?.userDictionary.forceReplaceRules ?? [];
+  const phrases = settings ? settings.userDictionary.phrases[settings.defaultVariant] ?? [] : [];
 
   async function updateSettings(patch: ExtensionSettingsPatch): Promise<void> {
     const next = await sendUpdateSettings(patch);
@@ -116,25 +114,25 @@ function App() {
     await updateSettings(removeAllowTermPatch(settings, term));
   }
 
-  async function addForceRule(): Promise<void> {
+  async function addPhrase(): Promise<void> {
     if (!settings) {
       return;
     }
 
-    const patch = addForceRulePatch(settings, forceVariant, forceFrom, forceTo);
+    const patch = addPhrasePatch(settings, phraseFrom, phraseTo);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
-    setForceFrom("");
-    setForceTo("");
+    setPhraseFrom("");
+    setPhraseTo("");
   }
 
-  async function removeForceRule(id: string): Promise<void> {
+  async function removePhrase(id: string): Promise<void> {
     if (!settings) {
       return;
     }
 
-    await updateSettings(removeForceRulePatch(settings, id));
+    await updateSettings(removePhrasePatch(settings, id));
   }
 
   const [recording, setRecording] = useState<ShortcutAction | null>(null);
@@ -214,11 +212,11 @@ function App() {
               <polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
-          <h2 className="cvl-settings-title">{t("settings.dict.forceTitle")}</h2>
+          <h2 className="cvl-settings-title">{t("settings.dict.phraseTitle")}</h2>
         </div>
 
         <div className="cvl-settings-body">
-          <DictPage rules={forceRules} onRemove={(id) => void removeForceRule(id)} />
+          <DictPage rules={phrases} onRemove={(id) => void removePhrase(id)} />
         </div>
       </div>
     );
@@ -392,46 +390,35 @@ function App() {
           </div>
 
           <div className="cvl-settings-dict-subsection">
-            <div className="cvl-settings-dict-subhead">{t("settings.dict.forceTitle")}</div>
+            <div className="cvl-settings-dict-subhead">{t("settings.dict.phraseTitle")}</div>
             <p className="cvl-settings-empty" style={{ marginBottom: 8 }}>
-              {t("settings.dict.forceDesc")}
+              {t("settings.dict.phraseDesc")}
             </p>
-            <div className="cvl-settings-force-grid">
-              <select
-                className="cvl-settings-select"
-                value={forceVariant}
-                style={{ gridColumn: "span 2" }}
-                onChange={(event) => setForceVariant(event.target.value as VariantCode)}>
-                {VARIANTS.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+            <div className="cvl-settings-phrase-grid">
               <input
                 className="cvl-settings-input"
-                value={forceFrom}
-                onChange={(event) => setForceFrom(event.target.value)}
-                placeholder={t("settings.dict.forceFrom")}
+                value={phraseFrom}
+                onChange={(event) => setPhraseFrom(event.target.value)}
+                placeholder={t("settings.dict.phraseFrom")}
               />
               <input
                 className="cvl-settings-input"
-                value={forceTo}
-                onChange={(event) => setForceTo(event.target.value)}
-                placeholder={t("settings.dict.forceTo")}
+                value={phraseTo}
+                onChange={(event) => setPhraseTo(event.target.value)}
+                placeholder={t("settings.dict.phraseTo")}
               />
-              <div className="cvl-settings-force-actions">
+              <div className="cvl-settings-phrase-actions">
                 <button
                   className="cvl-settings-btn cvl-settings-btn-sm"
                   type="button"
-                  onClick={() => void addForceRule()}>
-                  {t("settings.dict.forceAdd")}
+                  onClick={() => void addPhrase()}>
+                  {t("settings.dict.phraseAdd")}
                 </button>
                 <button
                   className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
                   type="button"
                   onClick={() => setPage("dict")}>
-                  {t("settings.dict.forceAll")}
+                  {t("settings.dict.phraseAll")}
                 </button>
               </div>
             </div>

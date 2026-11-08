@@ -2,7 +2,7 @@ import {
   DEFAULT_SHORTCUTS,
   type ExtensionSettings,
   type ExtensionSettingsPatch,
-  type ForceReplaceRule,
+  type CustomPhrase,
   type ShortcutMap,
   type UserDictionary,
   type VariantCode,
@@ -23,7 +23,12 @@ export const DEFAULT_USER_DICTIONARY: UserDictionary = {
     "zh-HK": [],
     "zh-Hant": [],
   },
-  forceReplaceRules: [],
+  phrases: {
+    "zh-CN": [],
+    "zh-TW": [],
+    "zh-HK": [],
+    "zh-Hant": [],
+  },
 };
 
 /**
@@ -60,7 +65,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 
 const VARIANT_CODES: readonly VariantCode[] = ["zh-CN", "zh-TW", "zh-HK", "zh-Hant"];
 const MAX_DICTIONARY_TERMS = 1000;
-const MAX_DICTIONARY_RULES = 1000;
+const MAX_DICTIONARY_PHRASES = 1000;
 
 /**
  * 将任意存储值收拢为字符串数组（纵深防御）：
@@ -101,42 +106,64 @@ function normalizeAllowTerms(dictionary?: Partial<UserDictionary>): UserDictiona
 }
 
 /**
- * 深度防御已保存的强制替换规则（纵深防御）：
+ * 深度防御已保存的自定义词组（纵深防御）：
  * - 仅接受对象数组；逐条校验 from/to 为字符串（忽略非字符串，避免 `.trim()` 抛错）。
- * - 丢弃 from 为空的规则；trim 两端空白。
- * - 校验 variant 为合法变体，否则回退到默认变体。
- * - 截断规则数量上限，避免超大数组造成内存 / 性能问题。
+ * - 丢弃 from 为空的词组；trim 两端空白。
+ * - 截断词组数量上限，避免超大数组造成内存 / 性能问题。
  */
-function normalizeForceReplaceRules(
-  rules?: unknown,
-  defaultVariant: VariantCode = "zh-TW",
-): ForceReplaceRule[] {
-  if (!Array.isArray(rules)) {
+function normalizePhraseList(items?: unknown): CustomPhrase[] {
+  if (!Array.isArray(items)) {
     return [];
   }
-  const out: ForceReplaceRule[] = [];
-  for (const item of rules) {
+  const out: CustomPhrase[] = [];
+  for (const item of items) {
     if (!item || typeof item !== "object") {
       continue;
     }
-    const candidate = item as Partial<ForceReplaceRule>;
+    const candidate = item as Partial<CustomPhrase>;
     const from = typeof candidate.from === "string" ? candidate.from.trim() : "";
     const to = typeof candidate.to === "string" ? candidate.to.trim() : "";
     if (!from) {
       continue;
     }
-    const variant = VARIANT_CODES.includes(candidate.variant as VariantCode)
-      ? (candidate.variant as VariantCode)
-      : defaultVariant;
     out.push({
-      id: typeof candidate.id === "string" && candidate.id ? candidate.id : `fr-${out.length}`,
-      variant,
+      id: typeof candidate.id === "string" && candidate.id ? candidate.id : `phrase-${out.length}`,
       from,
       to,
       enabled: candidate.enabled !== false,
     });
-    if (out.length >= MAX_DICTIONARY_RULES) {
+    if (out.length >= MAX_DICTIONARY_PHRASES) {
       break;
+    }
+  }
+  return out;
+}
+
+/**
+ * 按变体归一化自定义词组，并迁移旧版 `forceReplaceRules`
+ * （扁平数组、每条带 variant）：新版 `phrases` 为空的变体才吸收旧数据，
+ * 迁移后旧字段不再写回。
+ */
+function normalizePhrases(dictionary?: unknown): UserDictionary["phrases"] {
+  const source = (dictionary ?? {}) as {
+    phrases?: Partial<Record<VariantCode, unknown>>;
+    forceReplaceRules?: unknown;
+  };
+  const out = {} as UserDictionary["phrases"];
+  for (const variant of VARIANT_CODES) {
+    out[variant] = normalizePhraseList(source.phrases?.[variant]);
+  }
+  if (Array.isArray(source.forceReplaceRules)) {
+    for (const legacy of source.forceReplaceRules) {
+      const variant = (legacy as { variant?: unknown } | null)?.variant;
+      if (!VARIANT_CODES.includes(variant as VariantCode)) {
+        continue;
+      }
+      const key = variant as VariantCode;
+      if (source.phrases?.[key] !== undefined) {
+        continue;
+      }
+      out[key] = normalizePhraseList([...out[key], legacy]);
     }
   }
   return out;
@@ -151,7 +178,7 @@ export function normalizeSettings(settings?: Partial<ExtensionSettings> | null):
     siteEnabledMap: settings?.siteEnabledMap ?? {},
     userDictionary: {
       allowTerms: normalizeAllowTerms(settings?.userDictionary),
-      forceReplaceRules: normalizeForceReplaceRules(settings?.userDictionary?.forceReplaceRules),
+      phrases: normalizePhrases(settings?.userDictionary),
     },
     showOnSelection: settings?.showOnSelection ?? DEFAULT_SETTINGS.showOnSelection,
     shortcuts: { ...DEFAULT_SHORTCUTS, ...settings?.shortcuts },
@@ -174,8 +201,10 @@ export function mergeSettings(
         ...current.userDictionary.allowTerms,
         ...(patch.userDictionary?.allowTerms ?? {}),
       },
-      forceReplaceRules:
-        patch.userDictionary?.forceReplaceRules ?? current.userDictionary.forceReplaceRules,
+      phrases: {
+        ...current.userDictionary.phrases,
+        ...(patch.userDictionary?.phrases ?? {}),
+      },
     },
     shortcuts: {
       ...current.shortcuts,

@@ -31,15 +31,16 @@ describe("detectText", () => {
       defaultVariant: "zh-TW",
       detectionLevel: "standard",
       userDictionary: {
-        forceReplaceRules: [
-          {
-            id: "custom-software",
-            variant: "zh-TW",
-            from: "软件",
-            to: "軟件",
-            enabled: true,
-          },
-        ],
+        phrases: {
+          "zh-TW": [
+            {
+              id: "custom-software",
+              from: "软件",
+              to: "軟件",
+              enabled: true,
+            },
+          ],
+        },
       },
     });
 
@@ -49,7 +50,7 @@ describe("detectText", () => {
     });
 
     expect(issues).toHaveLength(1);
-    expect(issues[0]?.subtype).toBe("user-force-replace");
+    expect(issues[0]?.subtype).toBe("user-phrase");
     expect(issues[0]?.ruleId).toBe("custom-software");
     expect(issues[0]?.suggestions[0]?.value).toBe("軟件");
   });
@@ -194,9 +195,9 @@ describe("detectText", () => {
     const settings = createSettings({
       defaultVariant: "zh-TW",
       userDictionary: {
-        forceReplaceRules: [
-          { id: "off", variant: "zh-TW", from: "软件", to: "軟件", enabled: false },
-        ],
+        phrases: {
+          "zh-TW": [{ id: "off", from: "软件", to: "軟件", enabled: false }],
+        },
       },
     });
     const issues = detectText({ text: "软件", settings });

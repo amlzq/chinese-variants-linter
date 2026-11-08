@@ -108,7 +108,7 @@ function buildTermIssue(
     issue: {
       id: `${rule.id}:${start}:${start + sourceText.length}:${targetVariant}`,
       type: "variant_term",
-      subtype: rule.source === "user" ? "user-force-replace" : "builtin-term",
+      subtype: rule.source === "user" ? "user-phrase" : "builtin-term",
       sourceText,
       targetVariant,
       start,
@@ -120,7 +120,7 @@ function buildTermIssue(
       }),
       explanation:
         rule.source === "user"
-          ? t("detect.explain.userForce")
+          ? t("detect.explain.userPhrase")
           : t("detect.explain.builtinTerm"),
       suggestions: [createSuggestion(replacement, t("detect.suggestion.term"))],
       ruleId: rule.id,

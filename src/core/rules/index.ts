@@ -26,20 +26,20 @@ function buildUserTermRules(
   settings: ExtensionSettings,
   targetVariant: VariantCode,
 ): VariantTermRule[] {
-  return settings.userDictionary.forceReplaceRules
-    .filter((rule) => rule.enabled && rule.variant === targetVariant)
+  return (settings.userDictionary.phrases[targetVariant] ?? [])
+    .filter((rule) => rule.enabled)
     .map((rule, index) => ({
-      id: rule.id || `user-force-${index}`,
+      id: rule.id || `user-phrase-${index}`,
       kind: "variant_term" as const,
       sourceTerm: rule.from,
       targets: {
-        [rule.variant]: rule.to,
+        [targetVariant]: rule.to,
       },
       safe: true,
       enabled: true,
       priority: 10_000,
       source: "user" as const,
-      tags: ["force-replace"],
+      tags: ["user-phrase"],
     }));
 }
 

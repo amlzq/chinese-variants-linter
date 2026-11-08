@@ -28,9 +28,9 @@ export interface Issue {
     status: IssueStatus;
 }
 
-export interface ForceReplaceRule {
+/** 用户自定义词组：命中 from 时建议替换为 to；按「我使用的写法」(目标变体) 分开存放。 */
+export interface CustomPhrase {
     id: string;
-    variant: VariantCode;
     from: string;
     to: string;
     enabled: boolean;
@@ -38,7 +38,7 @@ export interface ForceReplaceRule {
 
 export interface UserDictionary {
     allowTerms: Record<VariantCode, string[]>;
-    forceReplaceRules: ForceReplaceRule[];
+    phrases: Record<VariantCode, CustomPhrase[]>;
 }
 
 export type ShortcutAction = "toggleEnabled" | "toggleReviewView" | "convertSelection" | "acceptNext";
@@ -90,7 +90,7 @@ export interface ExtensionSettingsPatch {
     siteEnabledMap?: Record<string, boolean>;
     userDictionary?: {
         allowTerms?: Partial<Record<VariantCode, string[]>>;
-        forceReplaceRules?: ForceReplaceRule[];
+        phrases?: Partial<Record<VariantCode, CustomPhrase[]>>;
     };
     showOnSelection?: boolean;
     shortcuts?: Partial<ShortcutMap>;

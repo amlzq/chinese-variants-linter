@@ -186,14 +186,14 @@ describe("渲染设置项", () => {
     ).toBe(true);
   });
 
-  it("展示允许词与强制替换规则", async () => {
+  it("展示允许词组与自定义词组", async () => {
     getSettingsMock.mockResolvedValue(
       buildSettings({
         userDictionary: {
           allowTerms: { "zh-TW": ["軟體"] },
-          forceReplaceRules: [
-            { id: "rule-1", variant: "zh-TW", from: "视频", to: "影片", enabled: true },
-          ],
+          phrases: {
+            "zh-TW": [{ id: "rule-1", from: "视频", to: "影片", enabled: true }],
+          },
         },
       }),
     );
@@ -230,7 +230,7 @@ describe("渲染设置项", () => {
     await showSettingsView();
     expect(body().querySelectorAll(".cvl-settings-empty").length).toBeGreaterThan(0);
     expect(body().querySelector("[data-dict-action='removeAllowTerm']")).toBeNull();
-    expect(body().querySelector("[data-dict-action='removeForceRule']")).toBeNull();
+    expect(body().querySelector("[data-dict-action='removePhrase']")).toBeNull();
   });
 
   it("快捷键列表展示已绑定与未绑定状态", async () => {
@@ -350,29 +350,29 @@ describe("字典编辑", () => {
     );
   });
 
-  it("添加强制替换规则并支持回车提交", async () => {
+  it("添加自定义词组并支持回车提交", async () => {
     await showSettingsView();
-    const from = body().querySelector<HTMLInputElement>("[data-dict-input='forceFrom']")!;
-    const to = body().querySelector<HTMLInputElement>("[data-dict-input='forceTo']")!;
+    const from = body().querySelector<HTMLInputElement>("[data-dict-input='phraseFrom']")!;
+    const to = body().querySelector<HTMLInputElement>("[data-dict-input='phraseTo']")!;
     from.value = " 视频 ";
     to.value = " 影片 ";
 
-    body().querySelector<HTMLButtonElement>("[data-dict-action='addForceRule']")!.click();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='addPhrase']")!.click();
     await flush();
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         userDictionary: expect.objectContaining({
-          forceReplaceRules: [
-            expect.objectContaining({ variant: "zh-TW", from: "视频", to: "影片" }),
-          ],
+          phrases: {
+            "zh-TW": [expect.objectContaining({ from: "视频", to: "影片" })],
+          },
         }),
       }),
     );
 
     // 重新渲染后需重新查询输入框
-    const nextFrom = body().querySelector<HTMLInputElement>("[data-dict-input='forceFrom']")!;
-    const nextTo = body().querySelector<HTMLInputElement>("[data-dict-input='forceTo']")!;
+    const nextFrom = body().querySelector<HTMLInputElement>("[data-dict-input='phraseFrom']")!;
+    const nextTo = body().querySelector<HTMLInputElement>("[data-dict-input='phraseTo']")!;
     nextFrom.value = "视频";
     nextTo.value = "影片";
     nextTo.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
@@ -382,29 +382,29 @@ describe("字典编辑", () => {
 
   it("原词或替换词为空时不提交", async () => {
     await showSettingsView();
-    body().querySelector<HTMLButtonElement>("[data-dict-action='addForceRule']")!.click();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='addPhrase']")!.click();
     await flush();
     expect(updateSettings).not.toHaveBeenCalled();
   });
 
-  it("点击删除强制替换规则", async () => {
+  it("点击删除自定义词组", async () => {
     getSettingsMock.mockResolvedValue(
       buildSettings({
         userDictionary: {
-          forceReplaceRules: [
-            { id: "rule-1", variant: "zh-TW", from: "视频", to: "影片", enabled: true },
-          ],
+          phrases: {
+            "zh-TW": [{ id: "rule-1", from: "视频", to: "影片", enabled: true }],
+          },
         },
       }),
     );
     await showSettingsView();
     body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
-    body().querySelector<HTMLButtonElement>("[data-dict-action='removeForceRule']")!.click();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='removePhrase']")!.click();
     await flush();
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
-        userDictionary: expect.objectContaining({ forceReplaceRules: [] }),
+        userDictionary: expect.objectContaining({ phrases: expect.objectContaining({ "zh-TW": [] }) }),
       }),
     );
   });

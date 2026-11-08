@@ -5,9 +5,9 @@ import { bindDictPageEvents, getDictPageMarkup } from "./dictView";
 const settings = mergeSettings(DEFAULT_SETTINGS, {
   defaultVariant: "zh-TW",
   userDictionary: {
-    forceReplaceRules: [
-      { id: "rule-1", variant: "zh-TW", from: "视频", to: "影片", enabled: true },
-    ],
+    phrases: {
+      "zh-TW": [{ id: "rule-1", from: "视频", to: "影片", enabled: true }],
+    },
   },
 });
 
@@ -27,15 +27,30 @@ describe("getDictPageMarkup", () => {
   it("没有规则时展示占位文案", () => {
     const body = mount(getDictPageMarkup(DEFAULT_SETTINGS));
     expect(body.querySelector(".cvl-settings-empty")).not.toBeNull();
-    expect(body.querySelector("[data-dict-action='removeForceRule']")).toBeNull();
+    expect(body.querySelector("[data-dict-action='removePhrase']")).toBeNull();
+  });
+
+  it("只展示当前「我使用的写法」下的词组", () => {
+    const mixed = mergeSettings(settings, {
+      userDictionary: {
+        phrases: { "zh-HK": [{ id: "hk", from: "软件", to: "軟件", enabled: true }] },
+      },
+    });
+    const tw = mount(getDictPageMarkup(mixed));
+    expect(tw.querySelectorAll(".cvl-settings-rule-item")).toHaveLength(1);
+    expect(tw.querySelector(".cvl-settings-rule-from")?.textContent).toBe("视频");
+
+    const hk = mount(getDictPageMarkup(mergeSettings(mixed, { defaultVariant: "zh-HK" })));
+    expect(hk.querySelector(".cvl-settings-rule-from")?.textContent).toBe("软件");
   });
 
   it("转义规则文本", () => {
     const evil = mergeSettings(DEFAULT_SETTINGS, {
+      defaultVariant: "zh-TW",
       userDictionary: {
-        forceReplaceRules: [
-          { id: "x", variant: "zh-TW", from: "<b>a</b>", to: "b", enabled: true },
-        ],
+        phrases: {
+          "zh-TW": [{ id: "x", from: "<b>a</b>", to: "b", enabled: true }],
+        },
       },
     });
     const body = mount(getDictPageMarkup(evil));
@@ -49,12 +64,12 @@ describe("bindDictPageEvents", () => {
     const update = vi.fn(async () => {});
     bindDictPageEvents(body, () => settings, update);
 
-    body.querySelector<HTMLButtonElement>("[data-dict-action='removeForceRule']")!.click();
+    body.querySelector<HTMLButtonElement>("[data-dict-action='removePhrase']")!.click();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
-        userDictionary: expect.objectContaining({ forceReplaceRules: [] }),
+        userDictionary: expect.objectContaining({ phrases: expect.objectContaining({ "zh-TW": [] }) }),
       }),
     );
   });

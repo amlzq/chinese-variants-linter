@@ -29,15 +29,17 @@ describe("rules", () => {
     }
   });
 
-  it("loadRuleBundle 合并启用中的用户强制替换规则，优先级最高", () => {
+  it("loadRuleBundle 合并启用中的用户自定义词组，优先级最高", () => {
     const settings = mergeSettings(DEFAULT_SETTINGS, {
       defaultVariant: "zh-TW",
       userDictionary: {
-        forceReplaceRules: [
-          { id: "on", variant: "zh-TW", from: "软件", to: "軟件", enabled: true },
-          { id: "off", variant: "zh-TW", from: "视频", to: "影片", enabled: false },
-          { id: "other", variant: "zh-CN", from: "軟體", to: "软件", enabled: true },
-        ],
+        phrases: {
+          "zh-TW": [
+            { id: "on", from: "软件", to: "軟件", enabled: true },
+            { id: "off", from: "视频", to: "影片", enabled: false },
+          ],
+          "zh-CN": [{ id: "other", from: "軟體", to: "软件", enabled: true }],
+        },
       },
     });
 
@@ -52,11 +54,11 @@ describe("rules", () => {
     const settings = mergeSettings(DEFAULT_SETTINGS, {
       defaultVariant: "zh-TW",
       userDictionary: {
-        forceReplaceRules: [{ id: "", variant: "zh-TW", from: "视频", to: "影片", enabled: true }],
+        phrases: { "zh-TW": [{ id: "", from: "视频", to: "影片", enabled: true }] },
       },
     });
     const bundle = loadRuleBundle(settings, "zh-TW");
-    expect(bundle.termRules[0]?.id).toBe("fr-0");
+    expect(bundle.termRules[0]?.id).toBe("phrase-0");
   });
 
   it("loadRuleBundle 按目标变体收集允许词", () => {

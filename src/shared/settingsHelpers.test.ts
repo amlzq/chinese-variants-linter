@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../core/storage";
 import {
-  addForceRulePatch,
+  addPhrasePatch,
   allowTermsPatch,
   removeAllowTermPatch,
-  removeForceRulePatch,
+  removePhrasePatch,
 } from "./settingsHelpers";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "./types";
 
@@ -50,64 +50,63 @@ describe("removeAllowTermPatch", () => {
   });
 });
 
-describe("addForceRulePatch", () => {
-  it("追加带 id 的强制替换规则并 trim 两端空白", () => {
-    const patch = addForceRulePatch(createSettings(), "zh-TW", " 视频 ", " 影片 ");
-    const rules = patch.userDictionary?.forceReplaceRules ?? [];
-    expect(rules).toHaveLength(1);
-    expect(rules[0]?.from).toBe("视频");
-    expect(rules[0]?.to).toBe("影片");
-    expect(rules[0]?.variant).toBe("zh-TW");
-    expect(rules[0]?.enabled).toBe(true);
-    expect(rules[0]?.id).toMatch(/^force-/);
+describe("addPhrasePatch", () => {
+  it("向当前目标变体追加带 id 的词组并 trim 两端空白", () => {
+    const patch = addPhrasePatch(createSettings(), " 视频 ", " 影片 ");
+    const phrases = patch.userDictionary?.phrases?.["zh-TW"] ?? [];
+    expect(phrases).toHaveLength(1);
+    expect(phrases[0]?.from).toBe("视频");
+    expect(phrases[0]?.to).toBe("影片");
+    expect(phrases[0]?.enabled).toBe(true);
+    expect(phrases[0]?.id).toMatch(/^phrase-/);
+    expect(Object.keys(patch.userDictionary?.phrases ?? {})).toEqual(["zh-TW"]);
+  });
+
+  it("按「我使用的写法」分开存放", () => {
+    const patch = addPhrasePatch(createSettings({ defaultVariant: "zh-HK" }), "视频", "影片");
+    expect(Object.keys(patch.userDictionary?.phrases ?? {})).toEqual(["zh-HK"]);
   });
 
   it("原词或替换词为空时返回空补丁", () => {
     const settings = createSettings();
-    expect(addForceRulePatch(settings, "zh-TW", "", "影片")).toEqual({});
-    expect(addForceRulePatch(settings, "zh-TW", "视频", "   ")).toEqual({});
+    expect(addPhrasePatch(settings, "", "影片")).toEqual({});
+    expect(addPhrasePatch(settings, "视频", "   ")).toEqual({});
   });
 
-  it("在已有规则之后追加", () => {
+  it("在已有词组之后追加", () => {
     const settings = createSettings({
       userDictionary: {
-        forceReplaceRules: [
-          { id: "old", variant: "zh-TW", from: "软件", to: "軟體", enabled: true },
-        ],
+        phrases: { "zh-TW": [{ id: "old", from: "软件", to: "軟體", enabled: true }] },
       },
     });
-    const rules = addForceRulePatch(settings, "zh-TW", "视频", "影片").userDictionary
-      ?.forceReplaceRules;
-    expect(rules?.map((rule) => rule.id.startsWith("old") ? "old" : "new")).toEqual([
-      "old",
-      "new",
-    ]);
+    const phrases = addPhrasePatch(settings, "视频", "影片").userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.map((p) => (p.id.startsWith("old") ? "old" : "new"))).toEqual(["old", "new"]);
   });
 });
 
-describe("removeForceRulePatch", () => {
-  it("按 id 移除规则", () => {
+describe("removePhrasePatch", () => {
+  it("按 id 移除当前变体下的词组", () => {
     const settings = createSettings({
       userDictionary: {
-        forceReplaceRules: [
-          { id: "a", variant: "zh-TW", from: "软件", to: "軟體", enabled: true },
-          { id: "b", variant: "zh-TW", from: "视频", to: "影片", enabled: true },
-        ],
+        phrases: {
+          "zh-TW": [
+            { id: "a", from: "软件", to: "軟體", enabled: true },
+            { id: "b", from: "视频", to: "影片", enabled: true },
+          ],
+        },
       },
     });
-    const rules = removeForceRulePatch(settings, "a").userDictionary?.forceReplaceRules;
-    expect(rules?.map((rule) => rule.id)).toEqual(["b"]);
+    const phrases = removePhrasePatch(settings, "a").userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.map((p) => p.id)).toEqual(["b"]);
   });
 
-  it("id 不存在时规则数量不变", () => {
+  it("id 不存在时词组数量不变", () => {
     const settings = createSettings({
       userDictionary: {
-        forceReplaceRules: [
-          { id: "a", variant: "zh-TW", from: "软件", to: "軟體", enabled: true },
-        ],
+        phrases: { "zh-TW": [{ id: "a", from: "软件", to: "軟體", enabled: true }] },
       },
     });
-    const rules = removeForceRulePatch(settings, "missing").userDictionary?.forceReplaceRules;
-    expect(rules).toHaveLength(1);
+    const phrases = removePhrasePatch(settings, "missing").userDictionary?.phrases?.["zh-TW"];
+    expect(phrases).toHaveLength(1);
   });
 });
