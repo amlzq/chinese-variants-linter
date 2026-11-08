@@ -2,15 +2,15 @@ import { getSupportedVariants } from "../../core/rules";
 import { escapeHtml } from "../../shared/dom";
 import { getVariantLabel, t } from "../../shared/locale";
 import {
+  MAX_PHRASES_PER_VARIANT,
   buildPhraseTemplateCsv,
   downloadTextFile,
-  parsePhraseFile,
   serializePhraseCsv,
 } from "../../shared/phraseCsv";
+import { importPhraseFile, pickPhraseFile } from "../../shared/phraseImport";
 import {
   addPhrasePatch,
   clearPhrasesPatch,
-  importPhrasesPatch,
   removePhrasePatch,
   updatePhrasePatch,
 } from "../../shared/settingsHelpers";
@@ -65,6 +65,7 @@ function getEditRow(id: string, from: string, to: string): string {
 export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageState): string {
   const phrases = settings.userDictionary.phrases[state.variant] ?? [];
   const adding = state.editingId === NEW_ITEM;
+  const full = phrases.length >= MAX_PHRASES_PER_VARIANT;
 
   const items = phrases.map((phrase) => {
     if (state.editingId === phrase.id) {
@@ -113,24 +114,10 @@ export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageSt
       <div class="cvl-settings-rule-list">${body}</div>
       ${adding ? "" : `
       <div class="cvl-dict-footer">
-        <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="addItem">+ ${t("settings.dict.addItem")}</button>
+        <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm" data-dict-action="addItem" ${full ? `disabled title="${t("settings.dict.limitReached", { max: MAX_PHRASES_PER_VARIANT })}"` : ""}>+ ${t("settings.dict.addItem")}</button>
       </div>`}
     </section>
   `;
-}
-
-function pickCsvFile(onText: (text: string) => void, onError: () => void): void {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".csv,.txt,.tsv,text/csv,text/plain";
-  input.addEventListener("change", () => {
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-    file.text().then(onText, onError);
-  });
-  input.click();
 }
 
 async function runMenuAction(action: string, ctx: DictPageContext): Promise<void> {
@@ -153,18 +140,13 @@ async function runMenuAction(action: string, ctx: DictPageContext): Promise<void
       await ctx.update(clearPhrasesPatch(variant));
     }
   } else if (action === "import") {
-    pickCsvFile(
-      (text) => {
-        const current = ctx.getSettings();
-        const patch = current ? importPhrasesPatch(current, variant, parsePhraseFile(text)) : {};
-        if (Object.keys(patch).length === 0) {
-          window.alert(t("settings.dict.importEmpty"));
-          return;
-        }
-        void ctx.update(patch);
-      },
-      () => window.alert(t("settings.dict.importFailed")),
-    );
+    pickPhraseFile((file) => {
+      const current = ctx.getSettings();
+      if (!current) {
+        return;
+      }
+      void importPhraseFile(file, current, variant).then((patch) => patch && ctx.update(patch));
+    });
   }
 }
 

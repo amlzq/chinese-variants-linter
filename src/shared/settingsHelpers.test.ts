@@ -9,6 +9,7 @@ import {
   removePhrasePatch,
   updatePhrasePatch,
 } from "./settingsHelpers";
+import { MAX_PHRASES_PER_VARIANT } from "./phraseCsv";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "./types";
 
 function createSettings(patch: ExtensionSettingsPatch = {}): ExtensionSettings {
@@ -129,12 +130,13 @@ describe("clearPhrasesPatch", () => {
 });
 
 describe("importPhrasesPatch", () => {
-  it("原词已存在则更新替换词，否则追加", () => {
+  it("原词已存在则更新替换词，否则追加，并统计数量", () => {
     const settings = createSettings({ userDictionary: { phrases: twPhrases } });
-    const phrases = importPhrasesPatch(settings, "zh-TW", [
+    const { patch, added, updated, skipped } = importPhrasesPatch(settings, "zh-TW", [
       { from: "软件", to: "軟件" },
       { from: "鼠标", to: "滑鼠" },
-    ]).userDictionary?.phrases?.["zh-TW"];
+    ]);
+    const phrases = patch.userDictionary?.phrases?.["zh-TW"];
     expect(phrases?.map((p) => [p.from, p.to])).toEqual([
       ["软件", "軟件"],
       ["视频", "影片"],
@@ -142,9 +144,53 @@ describe("importPhrasesPatch", () => {
     ]);
     expect(phrases?.[0]?.id).toBe("a");
     expect(new Set(phrases?.map((p) => p.id)).size).toBe(3);
+    expect([added, updated, skipped]).toEqual([1, 1, 0]);
   });
 
   it("没有可导入的行时返回空补丁", () => {
-    expect(importPhrasesPatch(createSettings(), "zh-TW", [])).toEqual({});
+    const result = importPhrasesPatch(createSettings(), "zh-TW", []);
+    expect(result.patch).toEqual({});
+  });
+
+  it("超过每个变体的数量上限时跳过新词组并计数，已有原词仍可更新", () => {
+    const full = Array.from({ length: MAX_PHRASES_PER_VARIANT }, (_, i) => ({
+      id: `p${i}`, from: `a${i}`, to: `b${i}`, enabled: true,
+    }));
+    const settings = createSettings({ userDictionary: { phrases: { "zh-TW": full } } });
+    const result = importPhrasesPatch(settings, "zh-TW", [
+      { from: "new1", to: "x" },
+      { from: "a0", to: "changed" },
+    ]);
+    expect([result.added, result.updated, result.skipped]).toEqual([0, 1, 1]);
+    expect(result.patch.userDictionary?.phrases?.["zh-TW"]).toHaveLength(MAX_PHRASES_PER_VARIANT);
+
+    const onlyNew = importPhrasesPatch(settings, "zh-TW", [{ from: "new1", to: "x" }]);
+    expect(onlyNew.patch).toEqual({});
+    expect(onlyNew.skipped).toBe(1);
+  });
+});
+
+describe("原词去重与数量上限", () => {
+  it("添加已存在的原词时更新其替换词而不是新增一条", () => {
+    const settings = createSettings({ userDictionary: { phrases: twPhrases } });
+    const phrases = addPhrasePatch(settings, "zh-TW", " 软件 ", "軟件").userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.map((p) => [p.id, p.from, p.to])).toEqual([
+      ["a", "软件", "軟件"],
+      ["b", "视频", "影片"],
+    ]);
+  });
+
+  it("编辑成与另一条相同的原词时合并，保留当前这条", () => {
+    const settings = createSettings({ userDictionary: { phrases: twPhrases } });
+    const phrases = updatePhrasePatch(settings, "zh-TW", "b", "软件", "軟件").userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.map((p) => [p.id, p.from, p.to])).toEqual([["b", "软件", "軟件"]]);
+  });
+
+  it("已满时添加新原词返回空补丁", () => {
+    const full = Array.from({ length: MAX_PHRASES_PER_VARIANT }, (_, i) => ({
+      id: `p${i}`, from: `a${i}`, to: `b${i}`, enabled: true,
+    }));
+    const settings = createSettings({ userDictionary: { phrases: { "zh-TW": full } } });
+    expect(addPhrasePatch(settings, "zh-TW", "brand-new", "x")).toEqual({});
   });
 });

@@ -8,7 +8,17 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../src/core/storage";
 import type { PopupState } from "../src/shared/types";
 
-const settings = mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW" });
+const settings = mergeSettings(DEFAULT_SETTINGS, {
+  defaultVariant: "zh-TW",
+  userDictionary: {
+    phrases: {
+      "zh-TW": [
+        { id: "1", from: "出租车", to: "計程車", enabled: true },
+        { id: "2", from: "软件", to: "軟體", enabled: true },
+      ],
+    },
+  },
+});
 
 vi.mock("../src/core/storage", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/core/storage")>();
@@ -91,4 +101,63 @@ describe("设置界面：页内面板与 popup 结构一致", () => {
       expect(popup).toEqual(inPage);
     });
   }
+});
+
+async function click(selector: string): Promise<void> {
+  const el = document.querySelector<HTMLElement>(selector);
+  expect(el, selector).not.toBeNull();
+  await act(async () => {
+    el!.click();
+  });
+}
+
+function describeDictPage(): unknown {
+  const root = document.querySelector(".cvl-settings-view")!;
+  const buttons = (selector: string) =>
+    [...root.querySelectorAll<HTMLButtonElement>(selector)].map((b) => `${text(b)}|${b.disabled}`);
+  return {
+    title: text(root.querySelector(".cvl-settings-title")!),
+    variants: [...root.querySelectorAll<HTMLOptionElement>(".cvl-dict-variant option")].map((o) => [o.value, o.selected]),
+    items: [...root.querySelectorAll(".cvl-settings-rule-item:not(.cvl-dict-edit)")].map((item) => ({
+      from: text(item.querySelector(".cvl-settings-rule-from")!),
+      to: text(item.querySelector(".cvl-settings-rule-to")!),
+      actions: [...item.querySelectorAll("button")].map(text),
+    })),
+    empty: texts(root, ".cvl-dict-empty"),
+    footer: buttons(".cvl-dict-footer button"),
+    menuLabel: root.querySelector(".cvl-dict-menu-btn")?.getAttribute("aria-label"),
+    menuItems: texts(root, ".cvl-dict-menu-list button"),
+    editor: [...root.querySelectorAll<HTMLInputElement>(".cvl-dict-edit input")].map((i) => [i.placeholder, i.value]),
+    editorButtons: texts(root, ".cvl-dict-edit-actions button"),
+  };
+}
+
+/** 依次进入词典页、展开菜单、进入编辑与新增，每一步比较两边的结构。 */
+async function walkDictPage(): Promise<unknown[]> {
+  const steps: unknown[] = [];
+  await click(".cvl-settings-phrase-actions button:nth-child(2)");
+  steps.push(describeDictPage());
+  await click(".cvl-dict-menu-btn");
+  steps.push(describeDictPage());
+  await click(".cvl-dict-menu-btn");
+  await click(".cvl-dict-item-actions button:first-child");
+  steps.push(describeDictPage());
+  await click(".cvl-dict-edit-actions button:nth-child(2)");
+  await click(".cvl-dict-footer button");
+  steps.push(describeDictPage());
+  return steps;
+}
+
+describe("词典页：页内面板与 popup 结构一致", () => {
+  it("列表、菜单、编辑、新增四个状态的结构与文案一致", async () => {
+    vi.stubGlobal("location", { hostname: "example.com" });
+    await renderPopup("example.com");
+    const popup = await walkDictPage();
+    document.body.innerHTML = "";
+    await renderInPage();
+    const inPage = await walkDictPage();
+
+    expect(popup).toHaveLength(4);
+    expect(popup).toEqual(inPage);
+  });
 });

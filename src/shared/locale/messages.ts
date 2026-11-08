@@ -112,6 +112,9 @@ const zhHans: Record<string, string> = {
   "settings.dict.clearConfirm": "确定清空「{variant}」下的所有词组吗？此操作无法撤销。",
   "settings.dict.importEmpty": "文件中没有可导入的词组（支持 CSV「原词,替换为」或 OpenCC 词条「原词<Tab>目标词」）。",
   "settings.dict.importFailed": "读取文件失败。",
+  "settings.dict.importTooLarge": "文件太大（上限 {size} KB）。",
+  "settings.dict.importPartial": "已导入 {added} 条、更新 {updated} 条；因每个地区最多保存 {max} 条，另有 {skipped} 条被跳过。",
+  "settings.dict.limitReached": "已达到 {max} 条上限。",
 
   "detect.termMessage": "建议使用 {variant} 词汇“{target}”",
   "detect.scriptMessage": "建议使用 {variant} 字形“{target}”",
@@ -226,6 +229,9 @@ const zhHant: Record<string, string> = {
   "settings.dict.clearConfirm": "確定清空「{variant}」下的所有詞組嗎？此操作無法復原。",
   "settings.dict.importEmpty": "檔案中沒有可匯入的詞組（支援 CSV「原詞,替換為」或 OpenCC 詞條「原詞<Tab>目標詞」）。",
   "settings.dict.importFailed": "讀取檔案失敗。",
+  "settings.dict.importTooLarge": "檔案太大（上限 {size} KB）。",
+  "settings.dict.importPartial": "已匯入 {added} 條、更新 {updated} 條；因每個地區最多儲存 {max} 條，另有 {skipped} 條被略過。",
+  "settings.dict.limitReached": "已達到 {max} 條上限。",
 
   "detect.termMessage": "建議使用 {variant} 詞彙「{target}」",
   "detect.scriptMessage": "建議使用 {variant} 字形「{target}」",
@@ -342,6 +348,9 @@ const en: Record<string, string> = {
   "settings.dict.clearConfirm": "Clear all phrases under “{variant}”? This cannot be undone.",
   "settings.dict.importEmpty": "No phrases to import (supported: CSV “from,to” or OpenCC-style “source<Tab>target”).",
   "settings.dict.importFailed": "Failed to read the file.",
+  "settings.dict.importTooLarge": "The file is too large (limit: {size} KB).",
+  "settings.dict.importPartial": "Imported {added} new and updated {updated}; {skipped} skipped because each variant holds at most {max} phrases.",
+  "settings.dict.limitReached": "Limit of {max} phrases reached.",
 
   "detect.termMessage": "Suggested {variant} term: “{target}”",
   "detect.scriptMessage": "Suggested {variant} glyph: “{target}”",

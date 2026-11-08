@@ -7,7 +7,8 @@
 **本扩展不收集、不传输、不出售任何用户数据。**
 
 - **本地处理**：本扩展读取网页编辑区（`textarea`、文本 `input`、`contenteditable`）中的文本以及你选中的文本，仅用于在本机检查中文简繁字形与地区用词。文本不会离开你的设备，也不会被保存。
-- **本地存储**：目标地区用语、检测强度、站点开关、允许词组、强制替换规则和快捷键等设置保存在浏览器的扩展本地存储（`storage.local`）中，不会同步到任何服务器。卸载扩展即会删除这些数据。
+- **本地存储**：目标地区用语、检测强度、站点开关、允许词组、自定义词组和快捷键等设置保存在浏览器的扩展本地存储（`storage.local`）中，不会同步到任何服务器。卸载扩展即会删除这些数据。
+- **词典导入与导出**：自定义词典的导入只读取你在系统文件选择器里主动选中的本地文件，导出与「下载模板」只在本机生成文件并交给浏览器下载。这些文件不会被上传，也不会被扩展另行保存。
 - **无网络请求**：本扩展不包含统计、遥测、广告或任何第三方服务，运行时不发起网络请求。简繁转换字典（OpenCC）随扩展一起打包。
 - **反馈链接**：只有当你主动点击「反馈」时，才会在新标签页打开本项目的 GitHub Issues 页面；该页面受 GitHub 隐私政策约束。
 
@@ -24,7 +25,8 @@
 **This extension does not collect, transmit, or sell any user data.**
 
 - **Local processing**: The extension reads text in editable fields (`textarea`, text `input`, `contenteditable`) and text you select, solely to check Chinese script and regional wording on your device. The text never leaves your device and is not stored.
-- **Local storage**: Settings such as target variant, detection level, per-site toggles, allowed terms, forced replacement rules, and shortcuts are kept in the browser's extension local storage (`storage.local`) and are never synced to any server. Uninstalling the extension removes them.
+- **Local storage**: Settings such as target variant, detection level, per-site toggles, allowed phrases, custom phrases, and shortcuts are kept in the browser's extension local storage (`storage.local`) and are never synced to any server. Uninstalling the extension removes them.
+- **Dictionary import and export**: importing only reads a local file you explicitly pick in the system file chooser; exporting and “Download template” only generate a file on your device and hand it to the browser to download. These files are never uploaded or kept by the extension.
 - **No network requests**: The extension contains no analytics, telemetry, ads, or third-party services, and makes no network requests at runtime. The conversion dictionary (OpenCC) ships with the extension.
 - **Feedback link**: Only when you click "Feedback" does the extension open this project's GitHub Issues page in a new tab; that page is subject to GitHub's privacy policy.
 

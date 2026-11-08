@@ -2,15 +2,15 @@ import { useState } from "react";
 import { getSupportedVariants } from "../../src/core/rules";
 import { getVariantLabel, t } from "../../src/shared/locale";
 import {
+  MAX_PHRASES_PER_VARIANT,
   buildPhraseTemplateCsv,
   downloadTextFile,
-  parsePhraseFile,
   serializePhraseCsv,
 } from "../../src/shared/phraseCsv";
+import { importPhraseFile, pickPhraseFile } from "../../src/shared/phraseImport";
 import {
   addPhrasePatch,
   clearPhrasesPatch,
-  importPhrasesPatch,
   removePhrasePatch,
   updatePhrasePatch,
 } from "../../src/shared/settingsHelpers";
@@ -72,27 +72,9 @@ export function DictPage({ settings, update }: DictPageProps) {
         void update(clearPhrasesPatch(variant));
       }
     } else {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".csv,.txt,.tsv,text/csv,text/plain";
-      input.addEventListener("change", () => {
-        const file = input.files?.[0];
-        if (!file) {
-          return;
-        }
-        file.text().then(
-          (text) => {
-            const patch = importPhrasesPatch(settings, variant, parsePhraseFile(text));
-            if (Object.keys(patch).length === 0) {
-              window.alert(t("settings.dict.importEmpty"));
-              return;
-            }
-            void update(patch);
-          },
-          () => window.alert(t("settings.dict.importFailed")),
-        );
+      pickPhraseFile((file) => {
+        void importPhraseFile(file, settings, variant).then((patch) => patch && update(patch));
       });
-      input.click();
     }
   }
 
@@ -131,6 +113,7 @@ export function DictPage({ settings, update }: DictPageProps) {
 
   const adding = editingId === NEW_ITEM;
   const empty = phrases.length === 0 && !adding;
+  const full = phrases.length >= MAX_PHRASES_PER_VARIANT;
 
   return (
     <section className="cvl-settings-section" onClick={() => menuOpen && setMenuOpen(false)}>
@@ -211,6 +194,8 @@ export function DictPage({ settings, update }: DictPageProps) {
           <button
             className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
             type="button"
+            disabled={full}
+            title={full ? t("settings.dict.limitReached", { max: MAX_PHRASES_PER_VARIANT }) : undefined}
             onClick={() => startEdit(NEW_ITEM, "", "")}>
             + {t("settings.dict.addItem")}
           </button>

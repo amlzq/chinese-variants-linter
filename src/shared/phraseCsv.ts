@@ -6,6 +6,11 @@ import type { CustomPhrase } from "./types";
 
 export const PHRASE_CSV_HEADER = ["from", "to"] as const;
 
+/** 每个变体最多保存的自定义词组数；storage 归一化时也以此截断。 */
+export const MAX_PHRASES_PER_VARIANT = 1000;
+/** 导入文件大小上限（字节），避免误选超大文件。 */
+export const MAX_IMPORT_FILE_BYTES = 1024 * 1024;
+
 function parseCsvRows(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -60,13 +65,26 @@ export function parsePhraseCsv(text: string): Array<{ from: string; to: string }
       return;
     }
     if (from && to) {
-      out.push({ from, to });
+      out.push({ from: unguardFormula(from), to: unguardFormula(to) });
     }
   });
   return out;
 }
 
-function escapeCsvField(value: string): string {
+/**
+ * CSV 公式注入防护：以 = + - @ 开头的单元格在 Excel / Sheets 中会被当作公式，
+ * 导出时前置一个单引号，导入时再去掉，保证往返一致。
+ */
+function guardFormula(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
+function unguardFormula(value: string): string {
+  return /^'[=+\-@]/.test(value) ? value.slice(1) : value;
+}
+
+function escapeCsvField(raw: string): string {
+  const value = guardFormula(raw);
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 

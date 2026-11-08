@@ -80,3 +80,18 @@ describe("parseTabDictionary / parsePhraseFile (OpenCC 词条格式)", () => {
     expect(parsePhraseFile("# note\nfrom,to\n软件,軟體\n")).toEqual([{ from: "软件", to: "軟體" }]);
   });
 });
+
+describe("CSV 公式注入防护", () => {
+  it("导出时给 = + - @ 开头的单元格加单引号，导入时还原", () => {
+    const rows = [
+      { from: "=SUM(A1)", to: "+1" },
+      { from: "-5度", to: "@home" },
+      { from: "'普通引号开头", to: "x" },
+    ];
+    const csv = serializePhraseCsv(rows);
+    expect(csv).toContain("'=SUM(A1),'+1");
+    expect(csv).toContain("'-5度,'@home");
+    expect(csv).toContain("'普通引号开头,x");
+    expect(parsePhraseCsv(csv)).toEqual(rows);
+  });
+});

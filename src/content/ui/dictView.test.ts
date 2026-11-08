@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../../core/storage";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "../../shared/types";
+import { MAX_PHRASES_PER_VARIANT } from "../../shared/phraseCsv";
 import {
   bindDictPageEvents,
   createDictPageState,
@@ -67,6 +68,22 @@ describe("getDictPageMarkup", () => {
     });
     const { body } = setup(evil);
     expect(body.querySelector("b")).toBeNull();
+  });
+});
+
+describe("数量上限", () => {
+  it("已满时「添加一项」按钮禁用", () => {
+    const full = mergeSettings(settings, {
+      userDictionary: {
+        phrases: {
+          "zh-TW": Array.from({ length: MAX_PHRASES_PER_VARIANT }, (_, i) => ({
+            id: `p${i}`, from: `a${i}`, to: `b${i}`, enabled: true,
+          })),
+        },
+      },
+    });
+    const { body } = setup(full);
+    expect(body.querySelector<HTMLButtonElement>("[data-dict-action='addItem']")!.disabled).toBe(true);
   });
 });
 

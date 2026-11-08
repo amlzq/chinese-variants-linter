@@ -1,3 +1,4 @@
+import { MAX_PHRASES_PER_VARIANT } from "../../shared/phraseCsv";
 import {
   DEFAULT_SHORTCUTS,
   type ExtensionSettings,
@@ -65,7 +66,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 
 const VARIANT_CODES: readonly VariantCode[] = ["zh-CN", "zh-TW", "zh-HK", "zh-Hant"];
 const MAX_ALLOW_PHRASES = 1000;
-const MAX_DICTIONARY_PHRASES = 1000;
+const MAX_DICTIONARY_PHRASES = MAX_PHRASES_PER_VARIANT;
 
 /**
  * 将任意存储值收拢为字符串数组（纵深防御）：

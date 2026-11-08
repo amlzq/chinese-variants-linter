@@ -1,3 +1,4 @@
+import { MAX_PHRASES_PER_VARIANT } from "./phraseCsv";
 import type {
   ExtensionSettings,
   ExtensionSettingsPatch,
@@ -57,15 +58,27 @@ export function addPhrasePatch(
   if (!trimmedFrom || !trimmedTo) {
     return {};
   }
+  const current = phrasesOf(settings, variant);
+  // 原词已存在时更新其替换词，避免同一原词出现两条。
+  if (current.some((p) => p.from === trimmedFrom)) {
+    return phrasesPatch(
+      variant,
+      current.map((p) => (p.from === trimmedFrom ? { ...p, to: trimmedTo } : p)),
+    );
+  }
+  if (current.length >= MAX_PHRASES_PER_VARIANT) {
+    return {};
+  }
   const phrase: CustomPhrase = {
     id: `phrase-${Date.now()}`,
     from: trimmedFrom,
     to: trimmedTo,
     enabled: true,
   };
-  return phrasesPatch(variant, [...phrasesOf(settings, variant), phrase]);
+  return phrasesPatch(variant, [...current, phrase]);
 }
 
+/** 修改词组；改成与另一条相同的原词时，以当前这条为准并移除另一条。 */
 export function updatePhrasePatch(
   settings: ExtensionSettings,
   variant: VariantCode,
@@ -80,9 +93,9 @@ export function updatePhrasePatch(
   }
   return phrasesPatch(
     variant,
-    phrasesOf(settings, variant).map((p) =>
-      p.id === id ? { ...p, from: trimmedFrom, to: trimmedTo } : p,
-    ),
+    phrasesOf(settings, variant)
+      .filter((p) => p.id === id || p.from !== trimmedFrom)
+      .map((p) => (p.id === id ? { ...p, from: trimmedFrom, to: trimmedTo } : p)),
   );
 }
 
@@ -101,24 +114,42 @@ export function clearPhrasesPatch(variant: VariantCode): ExtensionSettingsPatch 
   return phrasesPatch(variant, []);
 }
 
-/** 导入：同一原词已存在时更新其替换词，否则追加；返回空补丁表示没有可导入的行。 */
+export interface PhraseImportResult {
+  patch: ExtensionSettingsPatch;
+  added: number;
+  updated: number;
+  /** 因超过每个变体的数量上限而被跳过的新词组数。 */
+  skipped: number;
+}
+
+/**
+ * 导入：同一原词已存在时更新其替换词，否则追加；超过上限的新词组被跳过并计数。
+ * 没有任何变化（没有可导入的行）时 patch 为空对象。
+ */
 export function importPhrasesPatch(
   settings: ExtensionSettings,
   variant: VariantCode,
   rows: Array<{ from: string; to: string }>,
-): ExtensionSettingsPatch {
-  if (rows.length === 0) {
-    return {};
-  }
+): PhraseImportResult {
   const next = [...phrasesOf(settings, variant)];
   const now = Date.now();
+  let added = 0;
+  let updated = 0;
+  let skipped = 0;
   rows.forEach((row, index) => {
     const existing = next.findIndex((p) => p.from === row.from);
     if (existing >= 0) {
       next[existing] = { ...next[existing], to: row.to };
+      updated += 1;
+    } else if (next.length >= MAX_PHRASES_PER_VARIANT) {
+      skipped += 1;
     } else {
       next.push({ id: `phrase-${now}-${index}`, from: row.from, to: row.to, enabled: true });
+      added += 1;
     }
   });
-  return phrasesPatch(variant, next);
+  if (added + updated === 0) {
+    return { patch: {}, added, updated, skipped };
+  }
+  return { patch: phrasesPatch(variant, next), added, updated, skipped };
 }
