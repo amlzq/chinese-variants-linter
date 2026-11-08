@@ -164,3 +164,15 @@ export function downloadTextFile(filename: string, text: string): void {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
+
+/** 词典页每批渲染的词组数。 */
+export const PHRASE_PAGE_SIZE = 100;
+
+/** 按原词或替换词做不区分大小写的包含匹配；空查询返回全部。 */
+export function filterPhrases<T extends { from: string; to: string }>(phrases: T[], query: string): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return phrases;
+  }
+  return phrases.filter((p) => p.from.toLowerCase().includes(q) || p.to.toLowerCase().includes(q));
+}

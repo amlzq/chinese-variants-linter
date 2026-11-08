@@ -15,6 +15,10 @@ const settings = mergeSettings(DEFAULT_SETTINGS, {
       "zh-TW": [
         { id: "1", from: "出租车", to: "計程車", enabled: true },
         { id: "2", from: "软件", to: "軟體", enabled: true },
+        // 超过一批（100 条），用来比较「显示更多」。
+        ...Array.from({ length: 118 }, (_, i) => ({
+          id: `bulk-${i}`, from: `批量词${i}`, to: `批量替换${i}`, enabled: true,
+        })),
       ],
     },
   },
@@ -127,9 +131,22 @@ function describeDictPage(): unknown {
     footer: buttons(".cvl-dict-footer button"),
     menuLabel: root.querySelector(".cvl-dict-menu-btn")?.getAttribute("aria-label"),
     menuItems: texts(root, ".cvl-dict-menu-list button"),
+    search: [
+      root.querySelector<HTMLInputElement>(".cvl-dict-search")?.placeholder,
+      root.querySelector<HTMLInputElement>(".cvl-dict-search")?.value,
+    ],
+    more: texts(root, ".cvl-dict-more button"),
     editor: [...root.querySelectorAll<HTMLInputElement>(".cvl-dict-edit input")].map((i) => [i.placeholder, i.value]),
     editorButtons: texts(root, ".cvl-dict-edit-actions button"),
   };
+}
+
+async function typeSearch(value: string): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>(".cvl-dict-search")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
 }
 
 /** 依次进入词典页、展开菜单、进入编辑与新增，每一步比较两边的结构。 */
@@ -143,13 +160,20 @@ async function walkDictPage(): Promise<unknown[]> {
   await click(".cvl-dict-item-actions button:first-child");
   steps.push(describeDictPage());
   await click(".cvl-dict-edit-actions button:nth-child(2)");
+  await click(".cvl-dict-more button");
+  steps.push(describeDictPage());
   await click(".cvl-dict-footer button");
+  steps.push(describeDictPage());
+  await click(".cvl-dict-edit-actions button:nth-child(2)");
+  await typeSearch("软件");
+  steps.push(describeDictPage());
+  await typeSearch("不存在的词");
   steps.push(describeDictPage());
   return steps;
 }
 
 describe("词典页：页内面板与 popup 结构一致", () => {
-  it("列表、菜单、编辑、新增四个状态的结构与文案一致", async () => {
+  it("列表、菜单、编辑、新增、显示更多、搜索与无结果的结构与文案一致", async () => {
     vi.stubGlobal("location", { hostname: "example.com" });
     await renderPopup("example.com");
     const popup = await walkDictPage();
@@ -157,7 +181,7 @@ describe("词典页：页内面板与 popup 结构一致", () => {
     await renderInPage();
     const inPage = await walkDictPage();
 
-    expect(popup).toHaveLength(4);
+    expect(popup).toHaveLength(7);
     expect(popup).toEqual(inPage);
-  });
+  }, 30_000);
 });

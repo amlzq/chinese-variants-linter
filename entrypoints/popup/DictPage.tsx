@@ -3,8 +3,10 @@ import { getSupportedVariants } from "../../src/core/rules";
 import { getVariantLabel, t } from "../../src/shared/locale";
 import {
   MAX_PHRASES_PER_VARIANT,
+  PHRASE_PAGE_SIZE,
   buildPhraseTemplateCsv,
   downloadTextFile,
+  filterPhrases,
   serializePhraseCsv,
 } from "../../src/shared/phraseCsv";
 import { importPhraseFile, pickPhraseFile } from "../../src/shared/phraseImport";
@@ -38,10 +40,20 @@ export function DictPage({ settings, update }: DictPageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState("");
   const [draftTo, setDraftTo] = useState("");
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(PHRASE_PAGE_SIZE);
 
   const phrases = settings.userDictionary.phrases[variant] ?? [];
+  const filtered = filterPhrases(phrases, query);
+  const visible = filtered.slice(0, limit);
+  const remaining = filtered.length - visible.length;
 
   function startEdit(id: string, from: string, to: string): void {
+    if (id === NEW_ITEM) {
+      // 新增草稿行出现在列表末尾，先清掉搜索并展开全部，保证新增后能看到它。
+      setQuery("");
+      setLimit(Number.MAX_SAFE_INTEGER);
+    }
     setEditingId(id);
     setDraftFrom(from);
     setDraftTo(to);
@@ -87,14 +99,14 @@ export function DictPage({ settings, update }: DictPageProps) {
           value={draftFrom}
           placeholder={t("settings.dict.phraseFrom")}
           onChange={(event) => setDraftFrom(event.target.value)}
-          onKeyDown={(event) => event.key === "Enter" && void save()}
+          onKeyDown={(event) => event.key === "Enter" && !event.nativeEvent.isComposing && void save()}
         />
         <input
           className="cvl-settings-input"
           value={draftTo}
           placeholder={t("settings.dict.phraseTo")}
           onChange={(event) => setDraftTo(event.target.value)}
-          onKeyDown={(event) => event.key === "Enter" && void save()}
+          onKeyDown={(event) => event.key === "Enter" && !event.nativeEvent.isComposing && void save()}
         />
         <div className="cvl-dict-edit-actions">
           <button className="cvl-settings-btn cvl-settings-btn-sm" type="button" onClick={() => void save()}>
@@ -112,7 +124,7 @@ export function DictPage({ settings, update }: DictPageProps) {
   }
 
   const adding = editingId === NEW_ITEM;
-  const empty = phrases.length === 0 && !adding;
+  const empty = visible.length === 0 && !adding;
   const full = phrases.length >= MAX_PHRASES_PER_VARIANT;
 
   return (
@@ -124,6 +136,8 @@ export function DictPage({ settings, update }: DictPageProps) {
           onChange={(event) => {
             setVariant(event.target.value as VariantCode);
             setEditingId(null);
+            setQuery("");
+            setLimit(PHRASE_PAGE_SIZE);
           }}>
           {VARIANTS.map((value) => (
             <option key={value} value={value}>
@@ -157,9 +171,26 @@ export function DictPage({ settings, update }: DictPageProps) {
         </div>
       </div>
 
+      <input
+        className="cvl-settings-input cvl-dict-search"
+        type="search"
+        value={query}
+        placeholder={t("settings.dict.searchPlaceholder")}
+        aria-label={t("settings.dict.searchPlaceholder")}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setLimit(PHRASE_PAGE_SIZE);
+          setEditingId(null);
+        }}
+      />
+
       <div className="cvl-settings-rule-list">
-        {empty && <div className="cvl-settings-empty cvl-dict-empty">{t("settings.dict.phraseEmpty")}</div>}
-        {phrases.map((phrase) =>
+        {empty && (
+          <div className="cvl-settings-empty cvl-dict-empty">
+            {t(phrases.length === 0 ? "settings.dict.phraseEmpty" : "settings.dict.searchEmpty")}
+          </div>
+        )}
+        {visible.map((phrase) =>
           editingId === phrase.id ? (
             renderEditor(phrase.id)
           ) : (
@@ -188,6 +219,17 @@ export function DictPage({ settings, update }: DictPageProps) {
         )}
         {adding && renderEditor(NEW_ITEM)}
       </div>
+
+      {remaining > 0 && (
+        <div className="cvl-dict-more">
+          <button
+            className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
+            type="button"
+            onClick={() => setLimit(limit + PHRASE_PAGE_SIZE)}>
+            {t("settings.dict.showMore", { count: remaining })}
+          </button>
+        </div>
+      )}
 
       {!adding && (
         <div className="cvl-dict-footer">

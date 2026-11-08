@@ -6,6 +6,18 @@ import { DEFAULT_SETTINGS, mergeSettings } from "../src/core/storage";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "../src/shared/types";
 import { DictPage } from "../entrypoints/popup/DictPage";
 
+function bulkSettings(count: number): ExtensionSettings {
+  return mergeSettings(base, {
+    userDictionary: {
+      phrases: {
+        "zh-TW": Array.from({ length: count }, (_, i) => ({
+          id: `b${i}`, from: `Word${i}`, to: `词${i}`, enabled: true,
+        })),
+      },
+    },
+  });
+}
+
 const base = mergeSettings(DEFAULT_SETTINGS, {
   defaultVariant: "zh-TW",
   userDictionary: {
@@ -29,10 +41,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mount() {
+async function mount(initial: ExtensionSettings = base) {
   const host = document.createElement("div");
   document.body.append(host);
-  let current: ExtensionSettings = base;
+  let current: ExtensionSettings = initial;
   const update = vi.fn(async (patch: ExtensionSettingsPatch) => {
     current = mergeSettings(current, patch);
     await render();
@@ -131,5 +143,34 @@ describe("popup DictPage", () => {
     expect(ctx.host.querySelector(".cvl-dict-menu-list")).not.toBeNull();
     await click(ctx.host, ".cvl-settings-rule-list");
     expect(ctx.host.querySelector(".cvl-dict-menu-list")).toBeNull();
+  });
+
+  it("搜索按原词或替换词过滤，没有匹配时给出提示", async () => {
+    const ctx = await mount(bulkSettings(30));
+    const input = ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!;
+    await type(input, "word2");
+    expect(ctx.host.querySelectorAll(".cvl-settings-rule-item")).toHaveLength(11);
+    await type(input, "不存在");
+    expect(ctx.host.querySelector(".cvl-dict-empty")).not.toBeNull();
+    expect(ctx.host.querySelectorAll(".cvl-settings-rule-item")).toHaveLength(0);
+  });
+
+  it("分批显示：100 条一批，显示更多直到全部", async () => {
+    const ctx = await mount(bulkSettings(250));
+    const rows = () => ctx.host.querySelectorAll(".cvl-settings-rule-item").length;
+    expect(rows()).toBe(100);
+    await click(ctx.host, ".cvl-dict-more button");
+    expect(rows()).toBe(200);
+    await click(ctx.host, ".cvl-dict-more button");
+    expect(rows()).toBe(250);
+    expect(ctx.host.querySelector(".cvl-dict-more")).toBeNull();
+  });
+
+  it("添加一项清掉搜索并展开全部", async () => {
+    const ctx = await mount(bulkSettings(250));
+    await type(ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!, "Word1");
+    await click(ctx.host, ".cvl-dict-footer button");
+    expect(ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!.value).toBe("");
+    expect(ctx.host.querySelectorAll(".cvl-settings-rule-item:not(.cvl-dict-edit)")).toHaveLength(250);
   });
 });

@@ -115,6 +115,9 @@ const zhHans: Record<string, string> = {
   "settings.dict.importTooLarge": "文件太大（上限 {size} KB）。",
   "settings.dict.importPartial": "已导入 {added} 条、更新 {updated} 条；因每个地区最多保存 {max} 条，另有 {skipped} 条被跳过。",
   "settings.dict.limitReached": "已达到 {max} 条上限。",
+  "settings.dict.searchPlaceholder": "搜索词组",
+  "settings.dict.searchEmpty": "没有匹配的词组。",
+  "settings.dict.showMore": "显示更多（还有 {count} 条）",
 
   "detect.termMessage": "建议使用 {variant} 词汇“{target}”",
   "detect.scriptMessage": "建议使用 {variant} 字形“{target}”",
@@ -232,6 +235,9 @@ const zhHant: Record<string, string> = {
   "settings.dict.importTooLarge": "檔案太大（上限 {size} KB）。",
   "settings.dict.importPartial": "已匯入 {added} 條、更新 {updated} 條；因每個地區最多儲存 {max} 條，另有 {skipped} 條被略過。",
   "settings.dict.limitReached": "已達到 {max} 條上限。",
+  "settings.dict.searchPlaceholder": "搜尋詞組",
+  "settings.dict.searchEmpty": "沒有符合的詞組。",
+  "settings.dict.showMore": "顯示更多（還有 {count} 條）",
 
   "detect.termMessage": "建議使用 {variant} 詞彙「{target}」",
   "detect.scriptMessage": "建議使用 {variant} 字形「{target}」",
@@ -351,6 +357,9 @@ const en: Record<string, string> = {
   "settings.dict.importTooLarge": "The file is too large (limit: {size} KB).",
   "settings.dict.importPartial": "Imported {added} new and updated {updated}; {skipped} skipped because each variant holds at most {max} phrases.",
   "settings.dict.limitReached": "Limit of {max} phrases reached.",
+  "settings.dict.searchPlaceholder": "Search phrases",
+  "settings.dict.searchEmpty": "No matching phrases.",
+  "settings.dict.showMore": "Show more ({count} left)",
 
   "detect.termMessage": "Suggested {variant} term: “{target}”",
   "detect.scriptMessage": "Suggested {variant} glyph: “{target}”",

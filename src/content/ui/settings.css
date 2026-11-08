@@ -734,3 +734,17 @@
   width: 100%;
   height: 36px;
 }
+
+.cvl-settings-view .cvl-dict-search {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.cvl-settings-view .cvl-dict-more {
+  margin-top: 8px;
+}
+
+.cvl-settings-view .cvl-dict-more .cvl-settings-btn {
+  width: 100%;
+  height: 36px;
+}
