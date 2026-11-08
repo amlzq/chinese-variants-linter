@@ -42,14 +42,14 @@ describe("t", () => {
 describe("繁体地区用语", () => {
   it("台湾与香港使用各自的地区用语", () => {
     setRegion("TW");
-    expect(t("popup.detection.title")).toBe("偵測開關");
+    expect(t("settings.detection.title")).toBe("偵測強度");
     expect(t("settings.sites.defaultOn")).toBe("預設在所有網站開啟檢查");
-    expect(t("popup.force.to")).toBe("取代為");
+    expect(t("settings.dict.phraseTo")).toBe("取代為");
 
     setRegion("HK");
-    expect(t("popup.detection.title")).toBe("檢測開關");
+    expect(t("settings.detection.title")).toBe("檢測強度");
     expect(t("settings.sites.defaultOn")).toBe("預設在所有網站開啟檢查");
-    expect(t("popup.force.to")).toBe("替換為");
+    expect(t("settings.dict.phraseTo")).toBe("替換為");
   });
 
   it("澳门沿用香港用语", () => {
