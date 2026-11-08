@@ -4,7 +4,7 @@ import { getVariantLabel, t } from "../../shared/locale";
 import {
   buildPhraseTemplateCsv,
   downloadTextFile,
-  parsePhraseCsv,
+  parsePhraseFile,
   serializePhraseCsv,
 } from "../../shared/phraseCsv";
 import {
@@ -122,7 +122,7 @@ export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageSt
 function pickCsvFile(onText: (text: string) => void, onError: () => void): void {
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = ".csv,text/csv,text/plain";
+  input.accept = ".csv,.txt,.tsv,text/csv,text/plain";
   input.addEventListener("change", () => {
     const file = input.files?.[0];
     if (!file) {
@@ -156,7 +156,7 @@ async function runMenuAction(action: string, ctx: DictPageContext): Promise<void
     pickCsvFile(
       (text) => {
         const current = ctx.getSettings();
-        const patch = current ? importPhrasesPatch(current, variant, parsePhraseCsv(text)) : {};
+        const patch = current ? importPhrasesPatch(current, variant, parsePhraseFile(text)) : {};
         if (Object.keys(patch).length === 0) {
           window.alert(t("settings.dict.importEmpty"));
           return;

@@ -145,7 +145,7 @@ const zhHans: Record<string, string> = {
   "settings.dict.save": "保存",
   "settings.dict.cancel": "取消",
   "settings.dict.clearConfirm": "确定清空「{variant}」下的所有词组吗？此操作无法撤销。",
-  "settings.dict.importEmpty": "文件中没有可导入的词组（需要「原词,替换为」两列）。",
+  "settings.dict.importEmpty": "文件中没有可导入的词组（支持 CSV「原词,替换为」或 OpenCC 词条「原词<Tab>目标词」）。",
   "settings.dict.importFailed": "读取文件失败。",
 
   "detect.termMessage": "建议使用 {variant} 词汇“{target}”",
@@ -294,7 +294,7 @@ const zhHant: Record<string, string> = {
   "settings.dict.save": "儲存",
   "settings.dict.cancel": "取消",
   "settings.dict.clearConfirm": "確定清空「{variant}」下的所有詞組嗎？此操作無法復原。",
-  "settings.dict.importEmpty": "檔案中沒有可匯入的詞組（需要「原詞,替換為」兩欄）。",
+  "settings.dict.importEmpty": "檔案中沒有可匯入的詞組（支援 CSV「原詞,替換為」或 OpenCC 詞條「原詞<Tab>目標詞」）。",
   "settings.dict.importFailed": "讀取檔案失敗。",
 
   "detect.termMessage": "建議使用 {variant} 詞彙「{target}」",
@@ -445,7 +445,7 @@ const en: Record<string, string> = {
   "settings.dict.save": "Save",
   "settings.dict.cancel": "Cancel",
   "settings.dict.clearConfirm": "Clear all phrases under “{variant}”? This cannot be undone.",
-  "settings.dict.importEmpty": "No phrases to import (expected two columns: from,to).",
+  "settings.dict.importEmpty": "No phrases to import (supported: CSV “from,to” or OpenCC-style “source<Tab>target”).",
   "settings.dict.importFailed": "Failed to read the file.",
 
   "detect.termMessage": "Suggested {variant} term: “{target}”",

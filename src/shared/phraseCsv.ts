@@ -88,6 +88,51 @@ export function buildPhraseTemplateCsv(): string {
   return serializePhraseCsv(PHRASE_TEMPLATE_ROWS);
 }
 
+function dedupeKeepLast(rows: Array<{ from: string; to: string }>): Array<{ from: string; to: string }> {
+  const map = new Map<string, string>();
+  for (const row of rows) {
+    map.set(row.from, row.to);
+  }
+  return [...map].map(([from, to]) => ({ from, to }));
+}
+
+/**
+ * 解析 OpenCC 风格词条：每行 `原词<Tab>目标词`，`#` 开头为注释，
+ * 目标词若有多个以空白分隔的候选只取第一个；原词重复时以最后一条为准。
+ */
+export function parseTabDictionary(text: string): Array<{ from: string; to: string }> {
+  const out: Array<{ from: string; to: string }> = [];
+  for (const line of text.replace(/^﻿/, "").split(/\r\n|\n|\r/)) {
+    if (!line.trim() || line.trimStart().startsWith("#")) {
+      continue;
+    }
+    const tab = line.indexOf("\t");
+    if (tab < 0) {
+      continue;
+    }
+    const from = line.slice(0, tab).trim();
+    const to = line.slice(tab + 1).trim().split(/\s+/)[0] ?? "";
+    if (from && to) {
+      out.push({ from, to });
+    }
+  }
+  return dedupeKeepLast(out);
+}
+
+/**
+ * 导入文件入口：含制表符的非注释行视为 OpenCC 词条格式（.txt / .tsv），
+ * 否则按 CSV 解析。两种格式都忽略 `#` 注释行。
+ */
+export function parsePhraseFile(text: string): Array<{ from: string; to: string }> {
+  const lines = text.split(/\r\n|\n|\r/);
+  const isTab = lines.some((line) => !line.trimStart().startsWith("#") && line.includes("\t"));
+  if (isTab) {
+    return parseTabDictionary(text);
+  }
+  const withoutComments = lines.filter((line) => !line.trimStart().startsWith("#")).join("\n");
+  return dedupeKeepLast(parsePhraseCsv(withoutComments));
+}
+
 /** 触发浏览器下载一个文本文件。 */
 export function downloadTextFile(filename: string, text: string): void {
   const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
