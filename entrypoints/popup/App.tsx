@@ -27,7 +27,6 @@ import {
   addPhrasePatch,
   allowPhrasesPatch,
   removeAllowPhrasePatch,
-  removePhrasePatch,
 } from "../../src/shared/settingsHelpers";
 import "../../src/content/ui/settings.css";
 import { DictPage } from "./DictPage";
@@ -60,7 +59,6 @@ function App() {
 
     return settings.userDictionary.allowPhrases[settings.defaultVariant] ?? [];
   }, [settings]);
-  const phrases = settings ? settings.userDictionary.phrases[settings.defaultVariant] ?? [] : [];
 
   async function updateSettings(patch: ExtensionSettingsPatch): Promise<void> {
     const next = await sendUpdateSettings(patch);
@@ -119,20 +117,12 @@ function App() {
       return;
     }
 
-    const patch = addPhrasePatch(settings, phraseFrom, phraseTo);
+    const patch = addPhrasePatch(settings, settings.defaultVariant, phraseFrom, phraseTo);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
     setPhraseFrom("");
     setPhraseTo("");
-  }
-
-  async function removePhrase(id: string): Promise<void> {
-    if (!settings) {
-      return;
-    }
-
-    await updateSettings(removePhrasePatch(settings, id));
   }
 
   const [recording, setRecording] = useState<ShortcutAction | null>(null);
@@ -216,7 +206,7 @@ function App() {
         </div>
 
         <div className="cvl-settings-body">
-          <DictPage rules={phrases} onRemove={(id) => void removePhrase(id)} />
+          <DictPage settings={settings} update={updateSettings} />
         </div>
       </div>
     );

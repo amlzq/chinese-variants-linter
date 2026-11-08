@@ -634,3 +634,103 @@
   color: var(--cvl-text-strong);
   font-weight: 600;
 }
+/* Dictionary page */
+.cvl-settings-view .cvl-dict-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cvl-settings-view .cvl-dict-variant {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 60%;
+  min-width: 0;
+}
+
+.cvl-settings-view .cvl-dict-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.cvl-settings-view .cvl-dict-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 10px;
+}
+
+.cvl-settings-view .cvl-dict-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--cvl-border-frame);
+  border-radius: 10px;
+  background: var(--cvl-bg);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.cvl-settings-view .cvl-dict-menu-list button {
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--cvl-text-body);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvl-settings-view .cvl-dict-menu-list button:hover,
+.cvl-settings-view .cvl-dict-menu-list button:focus-visible {
+  outline: none;
+  background: var(--cvl-bg-hover);
+}
+
+.cvl-settings-view .cvl-dict-empty {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.cvl-settings-view .cvl-dict-item-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.cvl-settings-view .cvl-dict-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 8px;
+}
+
+.cvl-settings-view .cvl-dict-edit .cvl-settings-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.cvl-settings-view .cvl-dict-edit-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.cvl-settings-view .cvl-dict-footer {
+  margin-top: 8px;
+}
+
+.cvl-settings-view .cvl-dict-footer .cvl-settings-btn {
+  width: 100%;
+  height: 36px;
+}

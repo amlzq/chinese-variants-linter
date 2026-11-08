@@ -19,7 +19,13 @@ import {
   type VariantCode,
 } from "../../shared/types";
 import { comboToString, eventToCombo, isModifierKey } from "../shortcuts";
-import { bindDictPageEvents, getDictPageMarkup, getDictPageTitle } from "./dictView";
+import {
+  bindDictPageEvents,
+  createDictPageState,
+  getDictPageMarkup,
+  getDictPageTitle,
+  type DictPageState,
+} from "./dictView";
 import { getMainPanelView, hideMainPanel, isMainPanelOpen, showReviewView } from "./mainPanel";
 import { SETTINGS_VIEW_ID } from "./styles";
 import { attachTooltip, hideTooltip } from "./tooltip";
@@ -28,6 +34,7 @@ let panel: HTMLDivElement | null = null;
 let currentSettings: ExtensionSettings | null = null;
 let recordingAction: ShortcutAction | null = null;
 let page: "settings" | "dict" = "settings";
+let dictState: DictPageState | null = null;
 
 const VARIANTS = getSupportedVariants().map(
   (variant) => [variant, getVariantLabel(variant)] as [VariantCode, string],
@@ -130,10 +137,16 @@ function renderSettingsView(): void {
   }
 
   const scrollTop = body.scrollTop;
-  body.innerHTML = page === "dict" ? getDictPageMarkup(currentSettings) : getBodyMarkup();
+  body.innerHTML = page === "dict" ? getDictPageMarkup(currentSettings, dictState ??= createDictPageState(currentSettings.defaultVariant)) : getBodyMarkup();
   if (page === "dict") {
-    bindDictPageEvents(body, () => currentSettings, updateSettings);
+    bindDictPageEvents(body, {
+      getSettings: () => currentSettings,
+      getState: () => dictState!,
+      update: updateSettings,
+      rerender: renderSettingsView,
+    });
   } else {
+    body.onclick = null;
     bindEvents(body);
   }
   body.scrollTop = scrollTop;
@@ -511,7 +524,7 @@ function bindDictionaryEvents(body: HTMLElement): void {
     if (!from || !to || !currentSettings) {
       return;
     }
-    const patch = addPhrasePatch(currentSettings, from, to);
+    const patch = addPhrasePatch(currentSettings, currentSettings.defaultVariant, from, to);
     if (Object.keys(patch).length > 0) {
       await updateSettings(patch);
     }
@@ -519,6 +532,8 @@ function bindDictionaryEvents(body: HTMLElement): void {
 
   body.querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")?.addEventListener("click", () => {
     page = "dict";
+    // 词典页的变体下拉从「I write in」取初值，之后互不联动。
+    dictState = createDictPageState(currentSettings?.defaultVariant ?? "zh-CN");
     body.scrollTop = 0;
     renderSettingsView();
   });
