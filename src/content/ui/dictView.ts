@@ -116,6 +116,21 @@ function getResultsMarkup(settings: ExtensionSettings, state: DictPageState): st
   `;
 }
 
+/** 标题栏 trailing 位置的 actions 菜单；由 settingsView / popup 放进共用头部。 */
+export function getDictHeaderActionsMarkup(state: DictPageState): string {
+  return `
+        <div class="cvl-dict-menu">
+          <button class="cvl-dict-menu-btn" type="button" data-dict-action="toggleMenu" aria-haspopup="menu" aria-expanded="${state.menuOpen}" aria-label="${t("settings.dict.actions")}" title="${t("settings.dict.actions")}">${getMenuIcon()}</button>
+          ${state.menuOpen ? `
+          <div class="cvl-dict-menu-list" role="menu">
+            <button role="menuitem" data-dict-menu="import">${t("settings.dict.import")}</button>
+            <button role="menuitem" data-dict-menu="export">${t("settings.dict.export")}</button>
+            <button role="menuitem" data-dict-menu="template">${t("settings.dict.template")}</button>
+            <button role="menuitem" data-dict-menu="clear">${t("settings.dict.clear")}</button>
+          </div>` : ""}
+        </div>`;
+}
+
 export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageState): string {
   const options = getSupportedVariants()
     .map((value) => `<option value="${value}" ${value === state.variant ? "selected" : ""}>${getVariantLabel(value)}</option>`)
@@ -125,16 +140,6 @@ export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageSt
     <section class="cvl-settings-section">
       <div class="cvl-dict-toolbar">
         <select class="cvl-settings-select cvl-dict-variant" data-dict-input="dictVariant">${options}</select>
-        <div class="cvl-dict-menu">
-          <button class="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm cvl-dict-menu-btn" data-dict-action="toggleMenu" aria-haspopup="menu" aria-expanded="${state.menuOpen}" aria-label="${t("settings.dict.actions")}" title="${t("settings.dict.actions")}">${getMenuIcon()}</button>
-          ${state.menuOpen ? `
-          <div class="cvl-dict-menu-list" role="menu">
-            <button role="menuitem" data-dict-menu="import">${t("settings.dict.import")}</button>
-            <button role="menuitem" data-dict-menu="export">${t("settings.dict.export")}</button>
-            <button role="menuitem" data-dict-menu="template">${t("settings.dict.template")}</button>
-            <button role="menuitem" data-dict-menu="clear">${t("settings.dict.clear")}</button>
-          </div>` : ""}
-        </div>
       </div>
       <input class="cvl-settings-input cvl-dict-search" type="search" data-dict-input="dictSearch" value="${escapeHtml(state.query)}" placeholder="${t("settings.dict.searchPlaceholder")}" aria-label="${t("settings.dict.searchPlaceholder")}" />
       <div class="cvl-dict-results">${getResultsMarkup(settings, state)}</div>
@@ -263,15 +268,6 @@ function refreshResults(body: HTMLElement, ctx: DictPageContext): void {
 }
 
 export function bindDictPageEvents(body: HTMLElement, ctx: DictPageContext): void {
-  // 点击菜单以外区域收起菜单。用属性赋值而非 addEventListener，避免重复渲染时叠加监听。
-  body.onclick = (event) => {
-    const state = ctx.getState();
-    if (state.menuOpen && !(event.target as HTMLElement).closest(".cvl-dict-menu")) {
-      state.menuOpen = false;
-      ctx.rerender();
-    }
-  };
-
   body.querySelector<HTMLSelectElement>("[data-dict-input='dictVariant']")?.addEventListener("change", (event) => {
     const state = ctx.getState();
     state.variant = (event.target as HTMLSelectElement).value as VariantCode;
@@ -280,20 +276,6 @@ export function bindDictPageEvents(body: HTMLElement, ctx: DictPageContext): voi
     state.query = "";
     state.limit = PHRASE_PAGE_SIZE;
     ctx.rerender();
-  });
-
-  body.querySelector<HTMLButtonElement>("[data-dict-action='toggleMenu']")?.addEventListener("click", () => {
-    const state = ctx.getState();
-    state.menuOpen = !state.menuOpen;
-    ctx.rerender();
-  });
-
-  body.querySelectorAll<HTMLButtonElement>("[data-dict-menu]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      ctx.getState().menuOpen = false;
-      ctx.rerender();
-      void runMenuAction(btn.dataset.dictMenu ?? "", ctx);
-    });
   });
 
   // 搜索只刷新列表区，输入框保持不动，输入法组合输入与光标都不受影响。
@@ -306,4 +288,35 @@ export function bindDictPageEvents(body: HTMLElement, ctx: DictPageContext): voi
   });
 
   bindResultsEvents(body, ctx);
+}
+
+/**
+ * 渲染并绑定标题栏里的 actions 菜单。`host` 是头部 trailing 位置的容器，`root` 是整个
+ * 设置视图（用于点击菜单以外区域时收起菜单）。
+ */
+export function renderDictHeaderActions(host: HTMLElement, root: HTMLElement, ctx: DictPageContext): void {
+  host.innerHTML = getDictHeaderActionsMarkup(ctx.getState());
+
+  // 用属性赋值而非 addEventListener，避免重复渲染时叠加监听。
+  root.onclick = (event) => {
+    const state = ctx.getState();
+    if (state.menuOpen && !(event.target as HTMLElement).closest(".cvl-dict-menu")) {
+      state.menuOpen = false;
+      ctx.rerender();
+    }
+  };
+
+  host.querySelector<HTMLButtonElement>("[data-dict-action='toggleMenu']")?.addEventListener("click", () => {
+    const state = ctx.getState();
+    state.menuOpen = !state.menuOpen;
+    ctx.rerender();
+  });
+
+  host.querySelectorAll<HTMLButtonElement>("[data-dict-menu]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      ctx.getState().menuOpen = false;
+      ctx.rerender();
+      void runMenuAction(btn.dataset.dictMenu ?? "", ctx);
+    });
+  });
 }

@@ -6,6 +6,7 @@ import {
   bindDictPageEvents,
   createDictPageState,
   getDictPageMarkup,
+  renderDictHeaderActions,
   type DictPageState,
 } from "./dictView";
 
@@ -25,8 +26,17 @@ function flush(): Promise<void> {
 
 /** 与 settingsView 相同的渲染 / 绑定回路，便于测试交互。 */
 function setup(initial: ExtensionSettings = settings, state: DictPageState = createDictPageState("zh-TW")) {
+  // 与 settingsView 一致：actions 菜单在头部 trailing 位置，列表在 body。
+  const root = document.createElement("div");
+  root.className = "cvl-settings-view";
+  const header = document.createElement("div");
+  header.className = "cvl-settings-header";
+  const actions = document.createElement("div");
+  actions.className = "cvl-settings-header-actions";
+  header.append(actions);
   const body = document.createElement("div");
-  document.body.append(body);
+  root.append(header, body);
+  document.body.append(root);
   let current = initial;
   const update = vi.fn(async (patch: ExtensionSettingsPatch) => {
     current = mergeSettings(current, patch);
@@ -34,10 +44,12 @@ function setup(initial: ExtensionSettings = settings, state: DictPageState = cre
   });
   const render = () => {
     body.innerHTML = getDictPageMarkup(current, state);
-    bindDictPageEvents(body, { getSettings: () => current, getState: () => state, update, rerender: render });
+    const ctx = { getSettings: () => current, getState: () => state, update, rerender: render };
+    bindDictPageEvents(body, ctx);
+    renderDictHeaderActions(actions, root, ctx);
   };
   render();
-  return { body, state, update, get current() { return current; } };
+  return { body, root, state, update, get current() { return current; } };
 }
 
 function click(body: HTMLElement, selector: string): void {
@@ -101,22 +113,28 @@ describe("变体下拉", () => {
 });
 
 describe("actions 菜单", () => {
+  it("菜单在头部 trailing 位置而不在 body 内", () => {
+    const ctx = setup();
+    expect(ctx.root.querySelector(".cvl-settings-header .cvl-settings-header-actions .cvl-dict-menu-btn")).not.toBeNull();
+    expect(ctx.body.querySelector(".cvl-dict-menu-btn")).toBeNull();
+  });
+
   it("点击按钮展开四个菜单项，点击外部收起", () => {
     const ctx = setup();
-    expect(ctx.body.querySelector(".cvl-dict-menu-list")).toBeNull();
-    click(ctx.body, "[data-dict-action='toggleMenu']");
-    const items = [...ctx.body.querySelectorAll<HTMLElement>("[data-dict-menu]")].map((el) => el.dataset.dictMenu);
+    expect(ctx.root.querySelector(".cvl-dict-menu-list")).toBeNull();
+    click(ctx.root, "[data-dict-action='toggleMenu']");
+    const items = [...ctx.root.querySelectorAll<HTMLElement>("[data-dict-menu]")].map((el) => el.dataset.dictMenu);
     expect(items).toEqual(["import", "export", "template", "clear"]);
 
     ctx.body.querySelector<HTMLElement>(".cvl-settings-rule-list")!.click();
-    expect(ctx.body.querySelector(".cvl-dict-menu-list")).toBeNull();
+    expect(ctx.root.querySelector(".cvl-dict-menu-list")).toBeNull();
   });
 
   it("清空：确认后只清空当前变体", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const ctx = setup();
-    click(ctx.body, "[data-dict-action='toggleMenu']");
-    click(ctx.body, "[data-dict-menu='clear']");
+    click(ctx.root, "[data-dict-action='toggleMenu']");
+    click(ctx.root, "[data-dict-menu='clear']");
     await flush();
 
     expect(ctx.current.userDictionary.phrases["zh-TW"]).toEqual([]);
@@ -126,8 +144,8 @@ describe("actions 菜单", () => {
   it("清空：取消确认则不改动", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(false);
     const ctx = setup();
-    click(ctx.body, "[data-dict-action='toggleMenu']");
-    click(ctx.body, "[data-dict-menu='clear']");
+    click(ctx.root, "[data-dict-action='toggleMenu']");
+    click(ctx.root, "[data-dict-menu='clear']");
     await flush();
     expect(ctx.update).not.toHaveBeenCalled();
   });
@@ -140,10 +158,10 @@ describe("actions 菜单", () => {
       created.push(this.download);
     });
     const ctx = setup();
-    click(ctx.body, "[data-dict-action='toggleMenu']");
-    click(ctx.body, "[data-dict-menu='export']");
-    click(ctx.body, "[data-dict-action='toggleMenu']");
-    click(ctx.body, "[data-dict-menu='template']");
+    click(ctx.root, "[data-dict-action='toggleMenu']");
+    click(ctx.root, "[data-dict-menu='export']");
+    click(ctx.root, "[data-dict-action='toggleMenu']");
+    click(ctx.root, "[data-dict-menu='template']");
     await flush();
 
     expect(clickSpy).toHaveBeenCalledTimes(2);

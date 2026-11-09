@@ -221,7 +221,16 @@ describe("渲染设置项", () => {
     expect(title()).not.toBe(settingsTitle);
     expect(body().querySelector("select[data-setting='defaultVariant']")).toBeNull();
 
+    // actions 菜单在标题栏 trailing 位置，位于关闭按钮之后（视觉上在其左边），关闭按钮保留。
+    const header = view.querySelector(".cvl-settings-header")!;
+    expect(header.querySelector(".cvl-settings-header-actions .cvl-dict-menu-btn")).not.toBeNull();
+    const closeBtn = header.querySelector(".cvl-settings-close")!;
+    expect(closeBtn.compareDocumentPosition(header.querySelector(".cvl-settings-header-actions")!)
+      & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(header.querySelector<HTMLElement>(".cvl-settings-close")!.style.display).toBe("");
+
     view.querySelector<HTMLButtonElement>(".cvl-settings-back")!.click();
+    expect(view.querySelector(".cvl-settings-header-actions")).toBeNull();
     expect(title()).toBe(settingsTitle);
     expect(body().querySelector("select[data-setting='defaultVariant']")).not.toBeNull();
   });

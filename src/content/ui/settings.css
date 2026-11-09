@@ -124,6 +124,7 @@
 
 .cvl-settings-view .cvl-settings-close {
   grid-column: 3;
+  grid-row: 1;
   justify-self: end;
   display: inline-flex;
   align-items: center;
@@ -638,7 +639,6 @@
 .cvl-settings-view .cvl-dict-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -650,6 +650,18 @@
   min-width: 0;
 }
 
+.cvl-settings-view .cvl-settings-header-actions {
+  grid-column: 3;
+  /* 与关闭按钮同一格：显式指定行，避免被自动放置到下一行。 */
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* 页内面板的头部同时有关闭按钮（32px）：actions 与它同一格，向左让出关闭按钮的位置。 */
+.cvl-settings-view .cvl-settings-close ~ .cvl-settings-header-actions {
+  margin-right: 36px;
+}
+
 .cvl-settings-view .cvl-dict-menu {
   position: relative;
   flex-shrink: 0;
@@ -659,8 +671,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 0 10px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cvl-text-subtle);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.cvl-settings-view .cvl-dict-menu-btn:hover,
+.cvl-settings-view .cvl-dict-menu-btn[aria-expanded="true"] {
+  background: var(--cvl-bg-hover);
+  color: var(--cvl-text-body);
+}
+
+.cvl-settings-view .cvl-dict-menu-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cvl-focus-ring);
 }
 
 .cvl-settings-view .cvl-dict-menu-list {

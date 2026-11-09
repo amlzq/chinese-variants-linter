@@ -28,13 +28,14 @@ const VARIANTS = getSupportedVariants();
 interface DictPageProps {
   settings: ExtensionSettings;
   update: (patch: ExtensionSettingsPatch) => Promise<void>;
+  onBack: () => void;
 }
 
 /**
- * 自定义词典二级页；头部由 App 共用。
+ * 自定义词典二级页：自带与设置页同样的头部（back + 标题），trailing 位置放 actions 菜单。
  * 变体下拉只决定查看 / 编辑哪一份词典，初值取「I write in」，之后互不联动。
  */
-export function DictPage({ settings, update }: DictPageProps) {
+export function DictPage({ settings, update, onBack }: DictPageProps) {
   const [variant, setVariant] = useState<VariantCode>(settings.defaultVariant);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -128,7 +129,50 @@ export function DictPage({ settings, update }: DictPageProps) {
   const full = phrases.length >= MAX_PHRASES_PER_VARIANT;
 
   return (
-    <section className="cvl-settings-section" onClick={() => menuOpen && setMenuOpen(false)}>
+    <div className="cvl-settings-view" onClick={() => menuOpen && setMenuOpen(false)}>
+      <div className="cvl-settings-header">
+        <button
+          className="cvl-settings-back"
+          type="button"
+          aria-label={t("settings.aria.back")}
+          title={t("settings.aria.back")}
+          onClick={onBack}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+        <h2 className="cvl-settings-title">{t("settings.dict.phraseTitle")}</h2>
+        <div className="cvl-settings-header-actions">
+          <div className="cvl-dict-menu" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="cvl-dict-menu-btn"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={t("settings.dict.actions")}
+              title={t("settings.dict.actions")}
+              onClick={() => setMenuOpen(!menuOpen)}>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16">
+                <circle cx="5" cy="12" r="1.8" />
+                <circle cx="12" cy="12" r="1.8" />
+                <circle cx="19" cy="12" r="1.8" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="cvl-dict-menu-list" role="menu">
+                <button role="menuitem" type="button" onClick={() => onMenu("import")}>{t("settings.dict.import")}</button>
+                <button role="menuitem" type="button" onClick={() => onMenu("export")}>{t("settings.dict.export")}</button>
+                <button role="menuitem" type="button" onClick={() => onMenu("template")}>{t("settings.dict.template")}</button>
+                <button role="menuitem" type="button" onClick={() => onMenu("clear")}>{t("settings.dict.clear")}</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="cvl-settings-body">
+    <section className="cvl-settings-section">
       <div className="cvl-dict-toolbar">
         <select
           className="cvl-settings-select cvl-dict-variant"
@@ -145,30 +189,6 @@ export function DictPage({ settings, update }: DictPageProps) {
             </option>
           ))}
         </select>
-        <div className="cvl-dict-menu" onClick={(event) => event.stopPropagation()}>
-          <button
-            className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm cvl-dict-menu-btn"
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-label={t("settings.dict.actions")}
-            title={t("settings.dict.actions")}
-            onClick={() => setMenuOpen(!menuOpen)}>
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16">
-              <circle cx="5" cy="12" r="1.8" />
-              <circle cx="12" cy="12" r="1.8" />
-              <circle cx="19" cy="12" r="1.8" />
-            </svg>
-          </button>
-          {menuOpen && (
-            <div className="cvl-dict-menu-list" role="menu">
-              <button role="menuitem" type="button" onClick={() => onMenu("import")}>{t("settings.dict.import")}</button>
-              <button role="menuitem" type="button" onClick={() => onMenu("export")}>{t("settings.dict.export")}</button>
-              <button role="menuitem" type="button" onClick={() => onMenu("template")}>{t("settings.dict.template")}</button>
-              <button role="menuitem" type="button" onClick={() => onMenu("clear")}>{t("settings.dict.clear")}</button>
-            </div>
-          )}
-        </div>
       </div>
 
       <input
@@ -244,5 +264,8 @@ export function DictPage({ settings, update }: DictPageProps) {
         </div>
       )}
     </section>
+
+      </div>
+    </div>
   );
 }

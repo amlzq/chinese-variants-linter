@@ -188,28 +188,7 @@ function App() {
   }
 
   if (page === "dict") {
-    return (
-      <div className="cvl-settings-view">
-        <div className="cvl-settings-header">
-          <button
-            className="cvl-settings-back"
-            type="button"
-            aria-label={t("settings.aria.back")}
-            title={t("settings.aria.back")}
-            onClick={() => setPage("settings")}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <h2 className="cvl-settings-title">{t("settings.dict.phraseTitle")}</h2>
-        </div>
-
-        <div className="cvl-settings-body">
-          <DictPage settings={settings} update={updateSettings} />
-        </div>
-      </div>
-    );
+    return <DictPage settings={settings} update={updateSettings} onBack={() => setPage("settings")} />;
   }
 
   return (

@@ -45,6 +45,7 @@ async function mount(initial: ExtensionSettings = base) {
   const host = document.createElement("div");
   document.body.append(host);
   let current: ExtensionSettings = initial;
+  const onBack = vi.fn();
   const update = vi.fn(async (patch: ExtensionSettingsPatch) => {
     current = mergeSettings(current, patch);
     await render();
@@ -52,11 +53,11 @@ async function mount(initial: ExtensionSettings = base) {
   const render = async () => {
     await act(async () => {
       root ??= createRoot(host);
-      root.render(createElement(DictPage, { settings: current, update }));
+      root.render(createElement(DictPage, { settings: current, update, onBack }));
     });
   };
   await render();
-  return { host, update, get current() { return current; } };
+  return { host, update, onBack, get current() { return current; } };
 }
 
 async function click(host: Element, selector: string): Promise<void> {
@@ -74,6 +75,16 @@ async function type(input: HTMLInputElement, value: string): Promise<void> {
 }
 
 describe("popup DictPage", () => {
+  it("头部有返回按钮与标题，actions 菜单在头部 trailing 位置", async () => {
+    const ctx = await mount();
+    const header = ctx.host.querySelector(".cvl-settings-header")!;
+    expect(header.querySelector(".cvl-settings-title")?.textContent).not.toBe("");
+    expect(header.querySelector(".cvl-settings-header-actions .cvl-dict-menu-btn")).not.toBeNull();
+    expect(ctx.host.querySelector(".cvl-settings-body .cvl-dict-menu-btn")).toBeNull();
+    await click(ctx.host, ".cvl-settings-back");
+    expect(ctx.onBack).toHaveBeenCalledTimes(1);
+  });
+
   it("新增：填写后保存写入所选变体，空值不提交", async () => {
     const ctx = await mount();
     await click(ctx.host, ".cvl-dict-footer button");

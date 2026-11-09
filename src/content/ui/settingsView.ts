@@ -24,6 +24,7 @@ import {
   createDictPageState,
   getDictPageMarkup,
   getDictPageTitle,
+  renderDictHeaderActions,
   type DictPageState,
 } from "./dictView";
 import { getMainPanelView, hideMainPanel, isMainPanelOpen, showReviewView } from "./mainPanel";
@@ -137,16 +138,32 @@ function renderSettingsView(): void {
   }
 
   const scrollTop = body.scrollTop;
-  body.innerHTML = page === "dict" ? getDictPageMarkup(currentSettings, dictState ??= createDictPageState(currentSettings.defaultVariant)) : getBodyMarkup();
+  const header = view.querySelector<HTMLElement>(".cvl-settings-header");
+  let actionsHost = header?.querySelector<HTMLElement>(".cvl-settings-header-actions") ?? null;
+
   if (page === "dict") {
-    bindDictPageEvents(body, {
+    dictState ??= createDictPageState(currentSettings.defaultVariant);
+    const ctx = {
       getSettings: () => currentSettings,
       getState: () => dictState!,
       update: updateSettings,
       rerender: renderSettingsView,
-    });
+    };
+    body.innerHTML = getDictPageMarkup(currentSettings, dictState);
+    bindDictPageEvents(body, ctx);
+    // 词典页的 actions 菜单放在标题栏 trailing 位置、关闭按钮左边。
+    if (header && !actionsHost) {
+      actionsHost = document.createElement("div");
+      actionsHost.className = "cvl-settings-header-actions";
+      header.append(actionsHost);
+    }
+    if (actionsHost) {
+      renderDictHeaderActions(actionsHost, view, ctx);
+    }
   } else {
-    body.onclick = null;
+    actionsHost?.remove();
+    view.onclick = null;
+    body.innerHTML = getBodyMarkup();
     bindEvents(body);
   }
   body.scrollTop = scrollTop;
