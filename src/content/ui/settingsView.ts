@@ -1,6 +1,7 @@
 import { getSupportedVariants } from "../../core/rules";
 import { getSettings, isSiteEnabled, STORAGE_KEY } from "../../core/storage";
 import { escapeHtml } from "../../shared/dom";
+import type { LegalKind } from "../../shared/legal";
 import { getShortcutActionLabel, getVariantLabel, t } from "../../shared/locale";
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../shared/settingsClient";
 import {
@@ -28,6 +29,7 @@ import {
   renderDictHeaderActions,
   type DictPageState,
 } from "./dictView";
+import { getChevronIcon, getLegalPageMarkup, getLegalPageTitle } from "./legalView";
 import { getMainPanelView, hideMainPanel, isMainPanelOpen, showReviewView } from "./mainPanel";
 import { SETTINGS_VIEW_ID } from "./styles";
 import { attachTooltip, hideTooltip } from "./tooltip";
@@ -35,8 +37,10 @@ import { attachTooltip, hideTooltip } from "./tooltip";
 let panel: HTMLDivElement | null = null;
 let currentSettings: ExtensionSettings | null = null;
 let recordingAction: ShortcutAction | null = null;
-let page: "settings" | "dict" = "settings";
+let page: "settings" | "dict" | LegalKind = "settings";
 let dictState: DictPageState | null = null;
+/** 进入二级页前设置页的滚动位置，返回时恢复。 */
+let settingsScroll = 0;
 
 const VARIANTS = getSupportedVariants().map(
   (variant) => [variant, getVariantLabel(variant)] as [VariantCode, string],
@@ -96,9 +100,10 @@ export function ensureSettingsView(): HTMLDivElement {
 }
 
 function goBack(): void {
-  if (page === "dict") {
+  if (page !== "settings") {
     page = "settings";
     renderSettingsView();
+    ensureSettingsView().querySelector<HTMLElement>(".cvl-settings-body")!.scrollTop = settingsScroll;
     return;
   }
   showReviewView();
@@ -165,7 +170,8 @@ function renderSettingsView(): void {
 
   const title = view.querySelector<HTMLElement>(".cvl-settings-title");
   if (title) {
-    title.textContent = page === "dict" ? getDictPageTitle() : t("settings.title");
+    title.textContent =
+      page === "dict" ? getDictPageTitle() : page === "settings" ? t("settings.title") : getLegalPageTitle(page);
   }
 
   const scrollTop = body.scrollTop;
@@ -194,8 +200,12 @@ function renderSettingsView(): void {
   } else {
     actionsHost?.remove();
     view.onclick = null;
-    body.innerHTML = getBodyMarkup();
-    bindEvents(body);
+    if (page === "settings") {
+      body.innerHTML = getBodyMarkup();
+      bindEvents(body);
+    } else {
+      body.innerHTML = getLegalPageMarkup(page);
+    }
   }
   body.scrollTop = scrollTop;
 }
@@ -213,7 +223,7 @@ function getBodyMarkup(): string {
     ${getEnabledSection()}
     ${getDictionarySection()}
     ${getShortcutsSection()}
-    ${getPrivacySection()}
+    ${getLegalSection()}
   `;
 }
 
@@ -334,13 +344,16 @@ function getShortcutsSection(): string {
   `;
 }
 
-function getPrivacySection(): string {
+function getLegalSection(): string {
+  const row = (kind: LegalKind, label: string) => `
+      <button class="cvl-settings-link-row" type="button" data-legal-page="${kind}">
+        <span>${label}</span>
+        ${getChevronIcon()}
+      </button>`;
   return `
-    <section class="cvl-settings-section">
-      <div class="cvl-settings-section-head">
-        <h3>${t("settings.privacy.title")}</h3>
-        <p>${t("settings.privacy.desc")}</p>
-      </div>
+    <section class="cvl-settings-section cvl-settings-links">
+      ${row("terms", t("settings.legal.terms"))}
+      ${row("privacy", t("settings.legal.privacy"))}
     </section>
   `;
 }
@@ -433,11 +446,23 @@ function getDictionarySection(): string {
 }
 
 function bindEvents(body: HTMLElement): void {
+  bindLegalEvents(body);
   bindToggleEvents(body);
   bindSelectEvents(body);
   bindShortcutEvents(body);
   bindSiteEvents(body);
   bindDictionaryEvents(body);
+}
+
+function bindLegalEvents(body: HTMLElement): void {
+  body.querySelectorAll<HTMLButtonElement>("[data-legal-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      settingsScroll = body.scrollTop;
+      page = btn.dataset.legalPage as LegalKind;
+      body.scrollTop = 0;
+      renderSettingsView();
+    });
+  });
 }
 
 function bindToggleEvents(body: HTMLElement): void {
@@ -579,6 +604,7 @@ function bindDictionaryEvents(body: HTMLElement): void {
   });
 
   body.querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")?.addEventListener("click", () => {
+    settingsScroll = body.scrollTop;
     page = "dict";
     // 词典页的变体下拉从「I write in」取初值，之后互不联动。
     dictState = createDictPageState(currentSettings?.defaultVariant ?? "zh-CN");

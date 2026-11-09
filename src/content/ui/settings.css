@@ -813,3 +813,122 @@
   width: 100%;
   height: 36px;
 }
+
+/* Legal entries (Terms of Service / Privacy Policy) */
+.cvl-settings-view .cvl-settings-links {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.cvl-settings-view .cvl-settings-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cvl-text-body);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvl-settings-view .cvl-settings-link-row + .cvl-settings-link-row {
+  border-top: 1px solid var(--cvl-border);
+}
+
+.cvl-settings-view .cvl-settings-link-row svg {
+  flex-shrink: 0;
+  color: var(--cvl-text-subtle);
+}
+
+.cvl-settings-view .cvl-settings-link-row:hover {
+  color: var(--cvl-text-strong);
+}
+
+.cvl-settings-view .cvl-settings-link-row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cvl-focus-ring);
+}
+
+/* Legal document body (rendered from TERMS.md / PRIVACY.md) */
+.cvl-settings-view .cvl-legal {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--cvl-text-body);
+}
+
+.cvl-settings-view .cvl-legal h2,
+.cvl-settings-view .cvl-legal h3,
+.cvl-settings-view .cvl-legal h4 {
+  margin: 18px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cvl-text-strong);
+}
+
+.cvl-settings-view .cvl-legal > :first-child {
+  margin-top: 0;
+}
+
+.cvl-settings-view .cvl-legal p,
+.cvl-settings-view .cvl-legal ul,
+.cvl-settings-view .cvl-legal blockquote {
+  margin: 0 0 10px;
+}
+
+.cvl-settings-view .cvl-legal ul {
+  padding-left: 18px;
+}
+
+.cvl-settings-view .cvl-legal li + li {
+  margin-top: 4px;
+}
+
+.cvl-settings-view .cvl-legal blockquote {
+  padding: 8px 12px;
+  border-left: 3px solid var(--cvl-border-input);
+  border-radius: 0 8px 8px 0;
+  background: var(--cvl-bg-soft);
+  color: var(--cvl-text-subtle);
+}
+
+.cvl-settings-view .cvl-legal code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--cvl-bg-soft);
+  font-size: 12px;
+}
+
+.cvl-settings-view .cvl-legal a {
+  color: var(--cvl-primary);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.cvl-settings-view .cvl-legal .cvl-legal-table-wrap {
+  margin: 0 0 10px;
+  overflow-x: auto;
+}
+
+.cvl-settings-view .cvl-legal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.cvl-settings-view .cvl-legal th,
+.cvl-settings-view .cvl-legal td {
+  padding: 6px 8px;
+  border: 1px solid var(--cvl-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.cvl-settings-view .cvl-legal th {
+  background: var(--cvl-bg-soft);
+  color: var(--cvl-text-strong);
+}

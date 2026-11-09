@@ -493,6 +493,55 @@ describe("快捷键录制", () => {
   });
 });
 
+describe("服务条款 / 隐私权政策", () => {
+  const title = () => view().querySelector(".cvl-settings-title")!.textContent;
+  const rows = () => [...body().querySelectorAll<HTMLButtonElement>(".cvl-settings-link-row")];
+
+  it("设置页底部（隐私说明之后）有两个入口", async () => {
+    await showSettingsView();
+    const sections = [...body().querySelectorAll(":scope > .cvl-settings-section")];
+    const last = sections.at(-1)!;
+    expect(last.classList.contains("cvl-settings-links")).toBe(true);
+    expect(rows().map((r) => r.dataset.legalPage)).toEqual(["terms", "privacy"]);
+  });
+
+  it("点击入口进入对应二级页，共用头部，返回回到设置页", async () => {
+    await showSettingsView();
+    const settingsTitle = title();
+
+    rows()[0].click();
+    expect(title()).not.toBe(settingsTitle);
+    expect(body().querySelector(".cvl-legal")).not.toBeNull();
+    expect(body().querySelector(".cvl-legal a[href='mailto:support@zeaon.dev']")).not.toBeNull();
+    expect(view().querySelector(".cvl-settings-close")).not.toBeNull();
+
+    view().querySelector<HTMLButtonElement>(".cvl-settings-back")!.click();
+    expect(title()).toBe(settingsTitle);
+    expect(rows()).toHaveLength(2);
+
+    rows()[1].click();
+    expect(body().querySelector(".cvl-legal table")).not.toBeNull();
+  });
+
+  it("二级页按 Esc 返回设置页，而不是直接回到评审视图", async () => {
+    await showSettingsView();
+    const settingsTitle = title();
+    rows()[1].click();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(title()).toBe(settingsTitle);
+    expect(showReviewView).not.toHaveBeenCalled();
+  });
+
+  it("返回时恢复进入前设置页的滚动位置", async () => {
+    await showSettingsView();
+    body().scrollTop = 240;
+    rows()[0].click();
+    expect(body().scrollTop).toBe(0);
+    view().querySelector<HTMLButtonElement>(".cvl-settings-back")!.click();
+    expect(body().scrollTop).toBe(240);
+  });
+});
+
 describe("词典页 Esc", () => {
   const esc = () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
   const title = () => view().querySelector(".cvl-settings-title")!.textContent;

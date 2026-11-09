@@ -57,6 +57,7 @@ function describeSection(section: Element) {
     subheads: texts(section, ".cvl-settings-dict-subhead"),
     shortcutNames: texts(section, ".cvl-settings-sc-name"),
     empties: texts(section, "p.cvl-settings-empty"),
+    linkRows: texts(section, ".cvl-settings-link-row"),
   };
 }
 
@@ -187,5 +188,39 @@ describe("词典页：页内面板与 popup 结构一致", () => {
 
     expect(popup).toHaveLength(8);
     expect(popup).toEqual(inPage);
+  }, 30_000);
+});
+
+describe("服务条款 / 隐私权政策：页内面板与 popup 一致", () => {
+  function describeLegal() {
+    const root = document.querySelector(".cvl-settings-view")!;
+    const content = root.querySelector(".cvl-legal")!;
+    return {
+      title: text(root.querySelector(".cvl-settings-title")!),
+      html: content.innerHTML,
+    };
+  }
+
+  async function walkLegal(): Promise<unknown[]> {
+    const steps: unknown[] = [];
+    for (const kind of ["terms", "privacy"]) {
+      await click(`.cvl-settings-link-row[data-legal-page='${kind}']`);
+      steps.push(describeLegal());
+      await click(".cvl-settings-back");
+    }
+    return steps;
+  }
+
+  it("两个二级页的标题与正文一致，返回后入口仍在", async () => {
+    vi.stubGlobal("location", { hostname: "example.com" });
+    await renderPopup("example.com");
+    const popup = await walkLegal();
+    document.body.innerHTML = "";
+    await renderInPage();
+    const inPage = await walkLegal();
+
+    expect(popup).toHaveLength(2);
+    expect(popup).toEqual(inPage);
+    expect((popup[0] as { html: string }).html).toContain("support@zeaon.dev");
   }, 30_000);
 });

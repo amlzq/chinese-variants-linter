@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   comboToString,
   eventToCombo,
@@ -30,6 +30,8 @@ import {
 } from "../../src/shared/settingsHelpers";
 import "../../src/content/ui/settings.css";
 import { DictPage } from "./DictPage";
+import { LegalPage } from "./LegalPage";
+import type { LegalKind } from "../../src/shared/legal";
 
 const VARIANTS = getSupportedVariants().map(
   (variant) => [variant, getVariantLabel(variant)] as [VariantCode, string],
@@ -41,7 +43,21 @@ function App() {
   const [newAllowPhrase, setNewAllowPhrase] = useState("");
   const [phraseFrom, setPhraseFrom] = useState("");
   const [phraseTo, setPhraseTo] = useState("");
-  const [page, setPage] = useState<"settings" | "dict">("settings");
+  const [page, setPage] = useState<"settings" | "dict" | LegalKind>("settings");
+  // 进入二级页前设置页的滚动位置，返回时恢复。
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const settingsScroll = useRef(0);
+
+  function openPage(next: "dict" | LegalKind): void {
+    settingsScroll.current = bodyRef.current?.scrollTop ?? 0;
+    setPage(next);
+  }
+
+  useEffect(() => {
+    if (page === "settings" && bodyRef.current) {
+      bodyRef.current.scrollTop = settingsScroll.current;
+    }
+  }, [page]);
 
   useEffect(() => {
     void browser.runtime.sendMessage({ type: "popup/get-state" }).then((result: PopupState) => {
@@ -191,13 +207,17 @@ function App() {
     return <DictPage settings={settings} update={updateSettings} onBack={() => setPage("settings")} />;
   }
 
+  if (page === "terms" || page === "privacy") {
+    return <LegalPage kind={page} onBack={() => setPage("settings")} />;
+  }
+
   return (
     <div className="cvl-settings-view">
       <div className="cvl-settings-header">
         <h2 className="cvl-settings-title">{getExtensionName()}</h2>
       </div>
 
-      <div className="cvl-settings-body">
+      <div className="cvl-settings-body" ref={bodyRef}>
         <section className="cvl-settings-section">
           <div className="cvl-settings-section-head">
             <h3>{t("settings.iWriteIn")}</h3>
@@ -386,7 +406,7 @@ function App() {
                 <button
                   className="cvl-settings-btn cvl-settings-btn-ghost cvl-settings-btn-sm"
                   type="button"
-                  onClick={() => setPage("dict")}>
+                  onClick={() => openPage("dict")}>
                   {t("settings.dict.phraseAll")}
                 </button>
               </div>
@@ -468,11 +488,20 @@ function App() {
           </div>
         </section>
 
-        <section className="cvl-settings-section">
-          <div className="cvl-settings-section-head">
-            <h3>{t("settings.privacy.title")}</h3>
-            <p>{t("settings.privacy.desc")}</p>
-          </div>
+        <section className="cvl-settings-section cvl-settings-links">
+          {(["terms", "privacy"] as const).map((kind) => (
+            <button
+              key={kind}
+              className="cvl-settings-link-row"
+              type="button"
+              data-legal-page={kind}
+              onClick={() => openPage(kind)}>
+              <span>{t(kind === "terms" ? "settings.legal.terms" : "settings.legal.privacy")}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16">
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </button>
+          ))}
         </section>
       </div>
     </div>
