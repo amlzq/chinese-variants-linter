@@ -50,6 +50,28 @@ export function createDictPageState(variant: VariantCode): DictPageState {
   return { variant, editingId: null, menuOpen: false, query: "", limit: PHRASE_PAGE_SIZE, searchOpen: false };
 }
 
+/**
+ * Esc 逐层收起：先菜单，再编辑 / 新增中的草稿，再搜索（清空并收起），都没有时返回 false，
+ * 由调用方决定是否返回上一页。返回 true 表示状态已变，需要重绘。
+ */
+export function dismissDictLayer(state: DictPageState): boolean {
+  if (state.menuOpen) {
+    state.menuOpen = false;
+    return true;
+  }
+  if (state.editingId !== null) {
+    state.editingId = null;
+    return true;
+  }
+  if (state.query !== "" || state.searchOpen) {
+    state.query = "";
+    state.searchOpen = false;
+    state.limit = PHRASE_PAGE_SIZE;
+    return true;
+  }
+  return false;
+}
+
 export function getDictPageTitle(): string {
   return t("settings.dict.phraseTitle");
 }

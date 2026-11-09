@@ -5,6 +5,7 @@ import { MAX_PHRASES_PER_VARIANT } from "../../shared/phraseCsv";
 import {
   bindDictPageEvents,
   createDictPageState,
+  dismissDictLayer,
   getDictPageMarkup,
   renderDictHeaderActions,
   type DictPageState,
@@ -343,5 +344,34 @@ describe("分批显示", () => {
   it("少于一批时不出现「显示更多」", () => {
     const { body } = setup(bulk(100));
     expect(body.querySelector(".cvl-dict-more")).toBeNull();
+  });
+});
+
+describe("dismissDictLayer（Esc 逐层收起）", () => {
+  it("按菜单 → 编辑 → 搜索的顺序逐层收起，最后返回 false", () => {
+    const state = createDictPageState("zh-TW");
+    state.menuOpen = true;
+    state.editingId = "rule-1";
+    state.query = "软";
+    state.searchOpen = true;
+    state.limit = 300;
+
+    expect(dismissDictLayer(state)).toBe(true);
+    expect([state.menuOpen, state.editingId, state.query]).toEqual([false, "rule-1", "软"]);
+
+    expect(dismissDictLayer(state)).toBe(true);
+    expect([state.editingId, state.query]).toEqual([null, "软"]);
+
+    expect(dismissDictLayer(state)).toBe(true);
+    expect([state.query, state.searchOpen, state.limit]).toEqual(["", false, 100]);
+
+    expect(dismissDictLayer(state)).toBe(false);
+  });
+
+  it("只展开了搜索框但没有内容时，Esc 也先收起搜索框", () => {
+    const state = createDictPageState("zh-TW");
+    state.searchOpen = true;
+    expect(dismissDictLayer(state)).toBe(true);
+    expect(state.searchOpen).toBe(false);
   });
 });

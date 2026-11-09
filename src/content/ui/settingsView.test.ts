@@ -493,6 +493,64 @@ describe("快捷键录制", () => {
   });
 });
 
+describe("词典页 Esc", () => {
+  const esc = () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  const title = () => view().querySelector(".cvl-settings-title")!.textContent;
+
+  async function openDict(): Promise<string | null> {
+    await showSettingsView();
+    const settingsTitle = title();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
+    return settingsTitle;
+  }
+
+  it("菜单展开时 Esc 只收起菜单，仍停留在词典页", async () => {
+    const settingsTitle = await openDict();
+    view().querySelector<HTMLButtonElement>("[data-dict-action='toggleMenu']")!.click();
+    esc();
+    expect(view().querySelector(".cvl-dict-menu-list")).toBeNull();
+    expect(title()).not.toBe(settingsTitle);
+    expect(showReviewView).not.toHaveBeenCalled();
+  });
+
+  it("编辑中 Esc 取消编辑，再按一次才返回设置页", async () => {
+    const settingsTitle = await openDict();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='addItem']")!.click();
+    esc();
+    expect(body().querySelector(".cvl-dict-edit")).toBeNull();
+    expect(title()).not.toBe(settingsTitle);
+
+    esc();
+    expect(title()).toBe(settingsTitle);
+    expect(showReviewView).not.toHaveBeenCalled();
+  });
+
+  it("搜索框有内容时 Esc 清空并收起，再按一次返回设置页", async () => {
+    const settingsTitle = await openDict();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openSearch']")!.click();
+    const input = body().querySelector<HTMLInputElement>("[data-dict-input='dictSearch']")!;
+    input.value = "软";
+    input.dispatchEvent(new Event("input"));
+
+    esc();
+    expect(body().querySelector<HTMLInputElement>("[data-dict-input='dictSearch']")!.value).toBe("");
+    expect(body().querySelector<HTMLElement>(".cvl-dict-toolbar")!.dataset.search).toBe("closed");
+    expect(title()).not.toBe(settingsTitle);
+
+    esc();
+    expect(title()).toBe(settingsTitle);
+  });
+
+  it("没有可收起的内容时 Esc 返回设置页，设置页再按 Esc 回到评审视图", async () => {
+    const settingsTitle = await openDict();
+    esc();
+    expect(title()).toBe(settingsTitle);
+    expect(showReviewView).not.toHaveBeenCalled();
+    esc();
+    expect(showReviewView).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("跨标签页设置同步", () => {
   type ChangeListener = (changes: Record<string, unknown>, area: string) => void;
   const listeners = new Set<ChangeListener>();

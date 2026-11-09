@@ -74,6 +74,38 @@ async function type(input: HTMLInputElement, value: string): Promise<void> {
   });
 }
 
+describe("popup DictPage Esc", () => {
+  async function esc(): Promise<void> {
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+  }
+
+  it("菜单 → 编辑草稿 → 搜索逐层收起，都没有时才返回", async () => {
+    const ctx = await mount(bulkSettings(5));
+    await click(ctx.host, ".cvl-dict-search-btn");
+    await type(ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!, "Word1");
+    await click(ctx.host, ".cvl-dict-item-actions button:first-child");
+    await click(ctx.host, ".cvl-dict-menu-btn");
+
+    await esc();
+    expect(ctx.host.querySelector(".cvl-dict-menu-list")).toBeNull();
+    expect(ctx.host.querySelector(".cvl-dict-edit")).not.toBeNull();
+
+    await esc();
+    expect(ctx.host.querySelector(".cvl-dict-edit")).toBeNull();
+    expect(ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!.value).toBe("Word1");
+
+    await esc();
+    expect(ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!.value).toBe("");
+    expect(ctx.host.querySelector<HTMLElement>(".cvl-dict-toolbar")!.dataset.search).toBe("closed");
+    expect(ctx.onBack).not.toHaveBeenCalled();
+
+    await esc();
+    expect(ctx.onBack).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("popup DictPage", () => {
   it("头部有返回按钮与标题，actions 菜单在头部 trailing 位置", async () => {
     const ctx = await mount();

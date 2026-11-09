@@ -46,6 +46,29 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Esc 逐层收起：菜单 → 编辑 / 新增中的草稿 → 搜索，都没有时返回设置页。
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key !== "Escape") {
+        return;
+      }
+      event.preventDefault();
+      if (menuOpen) {
+        setMenuOpen(false);
+      } else if (editingId !== null) {
+        setEditingId(null);
+      } else if (query !== "" || searchOpen) {
+        setQuery("");
+        setSearchOpen(false);
+        setLimit(PHRASE_PAGE_SIZE);
+      } else {
+        onBack();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen, editingId, query, searchOpen, onBack]);
+
   // 展开后输入框才可见，等渲染提交后再聚焦。
   useEffect(() => {
     if (searchOpen) {

@@ -22,6 +22,7 @@ import { comboToString, eventToCombo, isModifierKey } from "../shortcuts";
 import {
   bindDictPageEvents,
   createDictPageState,
+  dismissDictLayer,
   getDictPageMarkup,
   getDictPageTitle,
   renderDictHeaderActions,
@@ -644,6 +645,9 @@ function onDocumentKeyDown(event: KeyboardEvent): void {
     event.stopPropagation();
     if (recordingAction) {
       cancelRecording();
+    } else if (page === "dict" && dictState && dismissDictLayer(dictState)) {
+      // 词典页：菜单 / 编辑 / 搜索等浮层先逐层收起，没有可收起的才返回设置页。
+      renderSettingsView();
     } else {
       goBack();
     }
