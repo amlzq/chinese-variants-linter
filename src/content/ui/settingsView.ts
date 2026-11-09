@@ -1,5 +1,5 @@
 import { getSupportedVariants } from "../../core/rules";
-import { getSettings, isSiteEnabled } from "../../core/storage";
+import { getSettings, isSiteEnabled, STORAGE_KEY } from "../../core/storage";
 import { escapeHtml } from "../../shared/dom";
 import { getShortcutActionLabel, getVariantLabel, t } from "../../shared/locale";
 import { toggleSite as sendToggleSite, updateSettings as sendUpdateSettings } from "../../shared/settingsClient";
@@ -115,6 +115,7 @@ export async function showSettingsView(): Promise<void> {
   view.dataset.hidden = "false";
   renderSettingsView();
   document.addEventListener("keydown", onDocumentKeyDown, true);
+  storageChanged()?.addListener(onStorageChanged);
 }
 
 export function hideSettingsView(): void {
@@ -122,6 +123,35 @@ export function hideSettingsView(): void {
   view.dataset.hidden = "true";
   recordingAction = null;
   document.removeEventListener("keydown", onDocumentKeyDown, true);
+  storageChanged()?.removeListener(onStorageChanged);
+}
+
+function storageChanged(): typeof browser.storage.onChanged | undefined {
+  return typeof browser === "undefined" ? undefined : browser.storage?.onChanged;
+}
+
+/**
+ * 其他标签页（或 popup）改了设置时，同步本面板持有的设置副本。
+ * 写入补丁是用这份副本算出来的（如整份词组列表），副本过期会覆盖别处的改动。
+ * 正在编辑词组或录制快捷键时只更新数据、不重绘，避免打断用户输入。
+ */
+function onStorageChanged(changes: Record<string, unknown>, areaName: string): void {
+  if (areaName !== "local" || !changes[STORAGE_KEY]) {
+    return;
+  }
+  void getSettings().then((next) => {
+    if (!currentSettings || !isSettingsViewOpen()) {
+      return;
+    }
+    if (JSON.stringify(next) === JSON.stringify(currentSettings)) {
+      return;
+    }
+    currentSettings = next;
+    const busy = recordingAction !== null || (page === "dict" && dictState?.editingId != null);
+    if (!busy) {
+      renderSettingsView();
+    }
+  });
 }
 
 function renderSettingsView(): void {

@@ -151,6 +151,18 @@ export function parsePhraseFile(text: string): Array<{ from: string; to: string 
   return dedupeKeepLast(parsePhraseCsv(withoutComments));
 }
 
+/**
+ * 解码导入文件：先严格按 UTF-8 解码，失败（Windows 上 Excel 默认保存的 GBK / ANSI CSV）
+ * 再按 GB18030 解码，避免导入乱码词条。
+ */
+export function decodePhraseFile(buffer: ArrayBuffer): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch {
+    return new TextDecoder("gb18030").decode(buffer);
+  }
+}
+
 /** 触发浏览器下载一个文本文件。 */
 export function downloadTextFile(filename: string, text: string): void {
   const blob = new Blob([text], { type: "text/csv;charset=utf-8" });

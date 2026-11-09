@@ -5,9 +5,13 @@ import { importPhraseFile } from "./phraseImport";
 
 const settings = mergeSettings(DEFAULT_SETTINGS, { defaultVariant: "zh-TW" });
 
-// jsdom 的 File 没有 text()，这里用最小桩对象代替。
-function file(text: string, size = text.length): File {
-  return { size, text: async () => text } as unknown as File;
+// jsdom 的 File 没有 text() / arrayBuffer()，这里用最小桩对象代替。
+function file(text: string | Uint8Array, size?: number): File {
+  const bytes = typeof text === "string" ? new TextEncoder().encode(text) : text;
+  return {
+    size: size ?? bytes.length,
+    arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  } as unknown as File;
 }
 
 afterEach(() => vi.restoreAllMocks());
@@ -18,6 +22,20 @@ describe("importPhraseFile", () => {
     const patch = await importPhraseFile(file("from,to\n软件,軟體\n"), settings, "zh-TW");
     expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "軟體" });
     expect(alert).not.toHaveBeenCalled();
+  });
+
+  it("GBK 编码的 CSV 也能正确导入（Windows Excel 默认保存格式）", async () => {
+    const alert = vi.spyOn(window, "alert").mockImplementation(() => {});
+    // "软件,软体\n" 的 GBK 字节
+    const gbk = new Uint8Array([0xc8, 0xed, 0xbc, 0xfe, 0x2c, 0xc8, 0xed, 0xcc, 0xe5, 0x0a]);
+    const patch = await importPhraseFile(file(gbk), settings, "zh-TW");
+    expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "软体" });
+    expect(alert).not.toHaveBeenCalled();
+  });
+
+  it("UTF-8 文件不受 GBK 回退影响", async () => {
+    const patch = await importPhraseFile(file("软件\t軟體\n"), settings, "zh-TW");
+    expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "軟體" });
   });
 
   it("文件过大时提示并返回 null", async () => {

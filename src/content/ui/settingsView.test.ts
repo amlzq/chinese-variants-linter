@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_SETTINGS, mergeSettings } from "../../core/storage";
+import { DEFAULT_SETTINGS, mergeSettings, STORAGE_KEY } from "../../core/storage";
 import type { ExtensionSettings, ExtensionSettingsPatch } from "../../shared/types";
 import { SETTINGS_VIEW_ID } from "./styles";
 import {
@@ -490,5 +490,97 @@ describe("快捷键录制", () => {
     body().querySelector<HTMLButtonElement>(".cvl-settings-sc-cancel")!.click();
 
     expect(body().querySelector(".cvl-settings-sc-key")?.textContent).toBe("Ctrl + Shift + U");
+  });
+});
+
+describe("跨标签页设置同步", () => {
+  type ChangeListener = (changes: Record<string, unknown>, area: string) => void;
+  const listeners = new Set<ChangeListener>();
+
+  beforeEach(() => {
+    listeners.clear();
+    vi.stubGlobal("browser", {
+      storage: {
+        onChanged: {
+          addListener: (l: ChangeListener) => listeners.add(l),
+          removeListener: (l: ChangeListener) => listeners.delete(l),
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function fireChanged(next: ExtensionSettings): void {
+    getSettingsMock.mockResolvedValue(next);
+    listeners.forEach((l) => l({ [STORAGE_KEY]: {} }, "local"));
+  }
+
+  function withPhrases(phrases: Array<{ id: string; from: string; to: string }>): ExtensionSettings {
+    return buildSettings({
+      userDictionary: {
+        phrases: { "zh-TW": phrases.map((p) => ({ ...p, enabled: true })) },
+      },
+    });
+  }
+
+  async function openDict(initial: ExtensionSettings): Promise<void> {
+    getSettingsMock.mockResolvedValue(initial);
+    await showSettingsView();
+    body().querySelector<HTMLButtonElement>("[data-dict-action='openDictList']")!.click();
+  }
+
+  it("显示 / 隐藏时注册并移除存储监听", async () => {
+    await showSettingsView();
+    expect(listeners.size).toBe(1);
+    hideSettingsView();
+    expect(listeners.size).toBe(0);
+  });
+
+  it("其他标签页新增词组后，词典页自动刷新", async () => {
+    await openDict(withPhrases([{ id: "a", from: "软件", to: "軟體" }]));
+    expect(body().querySelectorAll(".cvl-settings-rule-item")).toHaveLength(1);
+
+    fireChanged(withPhrases([
+      { id: "a", from: "软件", to: "軟體" },
+      { id: "b", from: "视频", to: "影片" },
+    ]));
+    await flush();
+
+    expect(body().querySelectorAll(".cvl-settings-rule-item")).toHaveLength(2);
+  });
+
+  it("正在编辑时不重绘，但保存基于最新数据，不覆盖其他标签页的改动", async () => {
+    await openDict(withPhrases([{ id: "a", from: "软件", to: "軟體" }]));
+    body().querySelector<HTMLButtonElement>("[data-dict-action='addItem']")!.click();
+    const editFrom = body().querySelector<HTMLInputElement>("[data-dict-input='editFrom']")!;
+    editFrom.value = "鼠标";
+    body().querySelector<HTMLInputElement>("[data-dict-input='editTo']")!.value = "滑鼠";
+
+    fireChanged(withPhrases([
+      { id: "a", from: "软件", to: "軟體" },
+      { id: "b", from: "视频", to: "影片" },
+    ]));
+    await flush();
+    // 草稿没有被重绘打断
+    expect(body().querySelector<HTMLInputElement>("[data-dict-input='editFrom']")).toBe(editFrom);
+    expect(editFrom.value).toBe("鼠标");
+
+    body().querySelector<HTMLButtonElement>("[data-dict-action='saveItem']")!.click();
+    await flush();
+
+    const patch = updateSettingsMock.mock.calls.at(-1)![0];
+    expect(patch.userDictionary?.phrases?.["zh-TW"]?.map((p) => p.from)).toEqual(["软件", "视频", "鼠标"]);
+  });
+
+  it("内容没有变化（自己刚写入触发的通知）时不重绘", async () => {
+    const initial = withPhrases([{ id: "a", from: "软件", to: "軟體" }]);
+    await openDict(initial);
+    const list = body().querySelector(".cvl-dict-results");
+    fireChanged(initial);
+    await flush();
+    expect(body().querySelector(".cvl-dict-results")).toBe(list);
   });
 });

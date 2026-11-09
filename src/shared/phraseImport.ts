@@ -1,5 +1,10 @@
 import { t } from "./locale";
-import { MAX_IMPORT_FILE_BYTES, MAX_PHRASES_PER_VARIANT, parsePhraseFile } from "./phraseCsv";
+import {
+  MAX_IMPORT_FILE_BYTES,
+  MAX_PHRASES_PER_VARIANT,
+  decodePhraseFile,
+  parsePhraseFile,
+} from "./phraseCsv";
 import { importPhrasesPatch } from "./settingsHelpers";
 import type { ExtensionSettings, ExtensionSettingsPatch, VariantCode } from "./types";
 
@@ -32,7 +37,7 @@ export async function importPhraseFile(
   }
   let text: string;
   try {
-    text = await file.text();
+    text = decodePhraseFile(await file.arrayBuffer());
   } catch {
     window.alert(t("settings.dict.importFailed"));
     return null;
