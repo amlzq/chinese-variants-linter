@@ -35,6 +35,8 @@ export interface DictPageState {
   query: string;
   /** 当前最多渲染的条数，「显示更多」每次增加一批。 */
   limit: number;
+  /** 搜索框是否展开；有搜索词时始终展开。 */
+  searchOpen: boolean;
 }
 
 export interface DictPageContext {
@@ -45,11 +47,15 @@ export interface DictPageContext {
 }
 
 export function createDictPageState(variant: VariantCode): DictPageState {
-  return { variant, editingId: null, menuOpen: false, query: "", limit: PHRASE_PAGE_SIZE };
+  return { variant, editingId: null, menuOpen: false, query: "", limit: PHRASE_PAGE_SIZE, searchOpen: false };
 }
 
 export function getDictPageTitle(): string {
   return t("settings.dict.phraseTitle");
+}
+
+function getSearchIcon(): string {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg>`;
 }
 
 function getMenuIcon(): string {
@@ -138,10 +144,11 @@ export function getDictPageMarkup(settings: ExtensionSettings, state: DictPageSt
 
   return `
     <section class="cvl-settings-section">
-      <div class="cvl-dict-toolbar">
+      <div class="cvl-dict-toolbar" data-search="${state.searchOpen || state.query ? "open" : "closed"}">
         <select class="cvl-settings-select cvl-dict-variant" data-dict-input="dictVariant">${options}</select>
+        <button class="cvl-dict-search-btn" type="button" data-dict-action="openSearch" aria-label="${t("settings.dict.searchPlaceholder")}" title="${t("settings.dict.searchPlaceholder")}">${getSearchIcon()}</button>
+        <input class="cvl-settings-input cvl-dict-search" type="search" data-dict-input="dictSearch" value="${escapeHtml(state.query)}" placeholder="${t("settings.dict.searchPlaceholder")}" aria-label="${t("settings.dict.searchPlaceholder")}" />
       </div>
-      <input class="cvl-settings-input cvl-dict-search" type="search" data-dict-input="dictSearch" value="${escapeHtml(state.query)}" placeholder="${t("settings.dict.searchPlaceholder")}" aria-label="${t("settings.dict.searchPlaceholder")}" />
       <div class="cvl-dict-results">${getResultsMarkup(settings, state)}</div>
     </section>
   `;
@@ -195,6 +202,7 @@ function bindResultsEvents(body: HTMLElement, ctx: DictPageContext): void {
     const state = ctx.getState();
     // 新增草稿行出现在列表末尾，先清掉搜索并展开全部，保证新增后能看到它。
     state.query = "";
+    state.searchOpen = false;
     state.limit = Number.MAX_SAFE_INTEGER;
     state.editingId = NEW_ITEM;
     ctx.rerender();
@@ -275,7 +283,28 @@ export function bindDictPageEvents(body: HTMLElement, ctx: DictPageContext): voi
     state.menuOpen = false;
     state.query = "";
     state.limit = PHRASE_PAGE_SIZE;
+    state.searchOpen = false;
     ctx.rerender();
+  });
+
+  // 搜索框的收起 / 展开只切换工具栏上的属性，不重建 DOM，避免点击其他按钮时被替换而丢失点击。
+  const toolbar = body.querySelector<HTMLElement>(".cvl-dict-toolbar");
+  const searchInput = body.querySelector<HTMLInputElement>("[data-dict-input='dictSearch']");
+  body.querySelector<HTMLButtonElement>("[data-dict-action='openSearch']")?.addEventListener("click", () => {
+    ctx.getState().searchOpen = true;
+    if (toolbar) {
+      toolbar.dataset.search = "open";
+    }
+    searchInput?.focus();
+  });
+  searchInput?.addEventListener("blur", () => {
+    const state = ctx.getState();
+    if (searchInput.value === "") {
+      state.searchOpen = false;
+      if (toolbar) {
+        toolbar.dataset.search = "closed";
+      }
+    }
   });
 
   // 搜索只刷新列表区，输入框保持不动，输入法组合输入与光标都不受影响。

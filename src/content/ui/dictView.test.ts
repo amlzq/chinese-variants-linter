@@ -282,6 +282,43 @@ describe("搜索", () => {
   });
 });
 
+describe("搜索框收起 / 展开", () => {
+  const state = (body: HTMLElement) => body.querySelector<HTMLElement>(".cvl-dict-toolbar")!.dataset.search;
+
+  it("默认收起，点击图标展开并聚焦输入框，空内容失焦后收起", () => {
+    const ctx = setup(bulk(5));
+    expect(state(ctx.body)).toBe("closed");
+
+    click(ctx.body, "[data-dict-action='openSearch']");
+    const input = ctx.body.querySelector<HTMLInputElement>("[data-dict-input='dictSearch']")!;
+    expect(state(ctx.body)).toBe("open");
+    expect(document.activeElement).toBe(input);
+
+    input.dispatchEvent(new Event("blur"));
+    expect(state(ctx.body)).toBe("closed");
+    expect(ctx.state.searchOpen).toBe(false);
+  });
+
+  it("有搜索词时失焦不收起；重新渲染后仍保持展开", () => {
+    const ctx = setup(bulk(5));
+    click(ctx.body, "[data-dict-action='openSearch']");
+    search(ctx.body, "Word1");
+    ctx.body.querySelector("[data-dict-input='dictSearch']")!.dispatchEvent(new Event("blur"));
+    expect(state(ctx.body)).toBe("open");
+
+    click(ctx.body, "[data-dict-action='editItem']");
+    expect(state(ctx.body)).toBe("open");
+  });
+
+  it("收起 / 展开不重建结果区，点击其他按钮不会丢失", () => {
+    const ctx = setup(bulk(5));
+    const list = ctx.body.querySelector(".cvl-dict-results");
+    click(ctx.body, "[data-dict-action='openSearch']");
+    ctx.body.querySelector("[data-dict-input='dictSearch']")!.dispatchEvent(new Event("blur"));
+    expect(ctx.body.querySelector(".cvl-dict-results")).toBe(list);
+  });
+});
+
 describe("分批显示", () => {
   it("默认只渲染 100 条，「显示更多」每次再加一批直到全部显示", () => {
     const ctx = setup(bulk(250));

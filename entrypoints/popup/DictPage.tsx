@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupportedVariants } from "../../src/core/rules";
 import { getVariantLabel, t } from "../../src/shared/locale";
 import {
@@ -43,6 +43,15 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
   const [draftTo, setDraftTo] = useState("");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PHRASE_PAGE_SIZE);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // 展开后输入框才可见，等渲染提交后再聚焦。
+  useEffect(() => {
+    if (searchOpen) {
+      searchRef.current?.focus();
+    }
+  }, [searchOpen]);
 
   const phrases = settings.userDictionary.phrases[variant] ?? [];
   const filtered = filterPhrases(phrases, query);
@@ -53,6 +62,7 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
     if (id === NEW_ITEM) {
       // 新增草稿行出现在列表末尾，先清掉搜索并展开全部，保证新增后能看到它。
       setQuery("");
+      setSearchOpen(false);
       setLimit(Number.MAX_SAFE_INTEGER);
     }
     setEditingId(id);
@@ -173,7 +183,7 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
 
       <div className="cvl-settings-body">
     <section className="cvl-settings-section">
-      <div className="cvl-dict-toolbar">
+      <div className="cvl-dict-toolbar" data-search={searchOpen || query ? "open" : "closed"}>
         <select
           className="cvl-settings-select cvl-dict-variant"
           value={variant}
@@ -181,6 +191,7 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
             setVariant(event.target.value as VariantCode);
             setEditingId(null);
             setQuery("");
+            setSearchOpen(false);
             setLimit(PHRASE_PAGE_SIZE);
           }}>
           {VARIANTS.map((value) => (
@@ -189,20 +200,32 @@ export function DictPage({ settings, update, onBack }: DictPageProps) {
             </option>
           ))}
         </select>
+        <button
+          className="cvl-dict-search-btn"
+          type="button"
+          aria-label={t("settings.dict.searchPlaceholder")}
+          title={t("settings.dict.searchPlaceholder")}
+          onClick={() => setSearchOpen(true)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="20" y1="20" x2="16.5" y2="16.5" />
+          </svg>
+        </button>
+        <input
+          ref={searchRef}
+          className="cvl-settings-input cvl-dict-search"
+          type="search"
+          value={query}
+          placeholder={t("settings.dict.searchPlaceholder")}
+          aria-label={t("settings.dict.searchPlaceholder")}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setLimit(PHRASE_PAGE_SIZE);
+            setEditingId(null);
+          }}
+          onBlur={() => query === "" && setSearchOpen(false)}
+        />
       </div>
-
-      <input
-        className="cvl-settings-input cvl-dict-search"
-        type="search"
-        value={query}
-        placeholder={t("settings.dict.searchPlaceholder")}
-        aria-label={t("settings.dict.searchPlaceholder")}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setLimit(PHRASE_PAGE_SIZE);
-          setEditingId(null);
-        }}
-      />
 
       <div className="cvl-settings-rule-list">
         {empty && (

@@ -765,9 +765,44 @@
   height: 36px;
 }
 
+/* 搜索框：收起时只显示图标按钮（靠右），展开后输入框占满工具栏剩余宽度。 */
+.cvl-settings-view .cvl-dict-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cvl-text-subtle);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.cvl-settings-view .cvl-dict-search-btn:hover {
+  background: var(--cvl-bg-hover);
+  color: var(--cvl-text-body);
+}
+
+.cvl-settings-view .cvl-dict-search-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cvl-focus-ring);
+}
+
 .cvl-settings-view .cvl-dict-search {
-  width: 100%;
-  margin-bottom: 10px;
+  flex: 1;
+  min-width: 0;
+  /* 与同一行的变体下拉等高。 */
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.cvl-settings-view .cvl-dict-toolbar[data-search="closed"] .cvl-dict-search,
+.cvl-settings-view .cvl-dict-toolbar[data-search="open"] .cvl-dict-search-btn {
+  display: none;
 }
 
 .cvl-settings-view .cvl-dict-more {

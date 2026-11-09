@@ -156,6 +156,21 @@ describe("popup DictPage", () => {
     expect(ctx.host.querySelector(".cvl-dict-menu-list")).toBeNull();
   });
 
+  it("搜索框默认收起，点击图标展开，空内容失焦后收起", async () => {
+    const ctx = await mount(bulkSettings(5));
+    const toolbar = ctx.host.querySelector<HTMLElement>(".cvl-dict-toolbar")!;
+    expect(toolbar.dataset.search).toBe("closed");
+
+    await click(ctx.host, ".cvl-dict-search-btn");
+    expect(toolbar.dataset.search).toBe("open");
+    expect(document.activeElement).toBe(ctx.host.querySelector(".cvl-dict-search"));
+
+    await act(async () => {
+      ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!.blur();
+    });
+    expect(toolbar.dataset.search).toBe("closed");
+  });
+
   it("搜索按原词或替换词过滤，没有匹配时给出提示", async () => {
     const ctx = await mount(bulkSettings(30));
     const input = ctx.host.querySelector<HTMLInputElement>(".cvl-dict-search")!;

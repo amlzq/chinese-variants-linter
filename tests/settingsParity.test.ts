@@ -135,6 +135,8 @@ function describeDictPage(): unknown {
       root.querySelector<HTMLInputElement>(".cvl-dict-search")?.placeholder,
       root.querySelector<HTMLInputElement>(".cvl-dict-search")?.value,
     ],
+    searchState: root.querySelector<HTMLElement>(".cvl-dict-toolbar")?.dataset.search,
+    searchBtnLabel: root.querySelector(".cvl-dict-search-btn")?.getAttribute("aria-label"),
     more: texts(root, ".cvl-dict-more button"),
     editor: [...root.querySelectorAll<HTMLInputElement>(".cvl-dict-edit input")].map((i) => [i.placeholder, i.value]),
     editorButtons: texts(root, ".cvl-dict-edit-actions button"),
@@ -165,6 +167,8 @@ async function walkDictPage(): Promise<unknown[]> {
   await click(".cvl-dict-footer button");
   steps.push(describeDictPage());
   await click(".cvl-dict-edit-actions button:nth-child(2)");
+  await click(".cvl-dict-search-btn");
+  steps.push(describeDictPage());
   await typeSearch("软件");
   steps.push(describeDictPage());
   await typeSearch("不存在的词");
@@ -181,7 +185,7 @@ describe("词典页：页内面板与 popup 结构一致", () => {
     await renderInPage();
     const inPage = await walkDictPage();
 
-    expect(popup).toHaveLength(7);
+    expect(popup).toHaveLength(8);
     expect(popup).toEqual(inPage);
   }, 30_000);
 });
