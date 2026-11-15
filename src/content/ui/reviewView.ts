@@ -165,9 +165,15 @@ function getHeaderMarkup(): string {
   `;
 }
 
+/** 只有高置信度问题可以批量接受；中置信度必须逐条确认。 */
+function safeIssueCount(): number {
+  return state.activeIssues.filter((issue) => issue.confidence === "high").length;
+}
+
 function getAcceptAllMarkup(): string {
-  const disabled = !state.activeElement || !canReplaceIssue(state.activeElement);
-  return `<button class="cvl-review-accept-all" type="button" data-role="accept-all" ${disabled ? "disabled" : ""}>${t("review.acceptAll")}</button>`;
+  const count = safeIssueCount();
+  const disabled = count === 0 || !state.activeElement || !canReplaceIssue(state.activeElement);
+  return `<button class="cvl-review-accept-all" type="button" data-role="accept-all" title="${t("review.acceptAllHint")}" aria-label="${t("review.acceptAllHint")}" ${disabled ? "disabled" : ""}>${t("review.acceptAllCount", { count })}</button>`;
 }
 
 function getIssueCardMarkup(issue: Issue, index: number, total: number): string {
@@ -181,6 +187,7 @@ function getIssueCardMarkup(issue: Issue, index: number, total: number): string 
       <div class="cvl-review-card-header">
         <span class="cvl-review-card-cat-icon cvl-review-card-cat-icon-${issue.confidence}">${getCategoryIconMarkup()}</span>
         <span class="cvl-review-card-category">${getCategoryLabel(issue)}</span>
+        ${issue.confidence === "medium" ? `<span class="cvl-review-badge">${t("review.needsReview")}</span>` : ""}
       </div>
       ${getContextMarkup(issue)}
       <div class="cvl-review-card-actions">

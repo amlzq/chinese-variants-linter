@@ -99,6 +99,19 @@ export function updatePhrasePatch(
   );
 }
 
+/** 启用/停用词组：停用后不参与检查，但仍保留在词典与导出结果中。 */
+export function togglePhrasePatch(
+  settings: ExtensionSettings,
+  variant: VariantCode,
+  id: string,
+  enabled: boolean,
+): ExtensionSettingsPatch {
+  return phrasesPatch(
+    variant,
+    phrasesOf(settings, variant).map((p) => (p.id === id ? { ...p, enabled } : p)),
+  );
+}
+
 export function removePhrasePatch(
   settings: ExtensionSettings,
   variant: VariantCode,

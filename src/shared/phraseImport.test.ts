@@ -17,11 +17,12 @@ function file(text: string | Uint8Array, size?: number): File {
 afterEach(() => vi.restoreAllMocks());
 
 describe("importPhraseFile", () => {
-  it("解析 CSV 并返回补丁，不弹提示", async () => {
+  it("解析 CSV 并返回补丁，同时给出新增计数", async () => {
     const alert = vi.spyOn(window, "alert").mockImplementation(() => {});
     const patch = await importPhraseFile(file("from,to\n软件,軟體\n"), settings, "zh-TW");
     expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "軟體" });
-    expect(alert).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(String(alert.mock.calls[0][0])).toContain("1");
   });
 
   it("GBK 编码的 CSV 也能正确导入（Windows Excel 默认保存格式）", async () => {
@@ -30,12 +31,20 @@ describe("importPhraseFile", () => {
     const gbk = new Uint8Array([0xc8, 0xed, 0xbc, 0xfe, 0x2c, 0xc8, 0xed, 0xcc, 0xe5, 0x0a]);
     const patch = await importPhraseFile(file(gbk), settings, "zh-TW");
     expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "软体" });
-    expect(alert).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledTimes(1);
   });
 
   it("UTF-8 文件不受 GBK 回退影响", async () => {
     const patch = await importPhraseFile(file("软件\t軟體\n"), settings, "zh-TW");
     expect(patch?.userDictionary?.phrases?.["zh-TW"]?.[0]).toMatchObject({ from: "软件", to: "軟體" });
+  });
+
+  it("重复导入同一原词时计入更新", async () => {
+    const alert = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const first = await importPhraseFile(file("软件,軟體\n"), settings, "zh-TW");
+    const merged = mergeSettings(settings, first ?? {});
+    await importPhraseFile(file("软件,軟體\n"), merged, "zh-TW");
+    expect(String(alert.mock.calls.at(-1)?.[0])).toContain("更新 1");
   });
 
   it("文件过大时提示并返回 null", async () => {

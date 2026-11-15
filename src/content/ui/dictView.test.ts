@@ -347,6 +347,30 @@ describe("分批显示", () => {
   });
 });
 
+describe("词组启停", () => {
+  const withEnabled = (enabled: boolean) =>
+    mergeSettings(settings, {
+      userDictionary: { phrases: { "zh-TW": [{ id: "a", from: "视频", to: "影片", enabled }] } },
+    });
+
+  it("停用的词组显示为未勾选并弱化", () => {
+    const { body } = setup(withEnabled(false));
+    const box = body.querySelector<HTMLInputElement>("[data-dict-action='togglePhrase']")!;
+    expect(box.checked).toBe(false);
+    expect(body.querySelector(".cvl-dict-phrase-off")).not.toBeNull();
+  });
+
+  it("点击开关把启停状态写回设置", async () => {
+    const ctx = setup(withEnabled(false));
+    const box = ctx.body.querySelector<HTMLInputElement>("[data-dict-action='togglePhrase']")!;
+    box.checked = true;
+    box.dispatchEvent(new Event("change"));
+    await flush();
+    expect(ctx.current.userDictionary.phrases["zh-TW"]?.[0].enabled).toBe(true);
+    expect(ctx.body.querySelector(".cvl-dict-phrase-off")).toBeNull();
+  });
+});
+
 describe("dismissDictLayer（Esc 逐层收起）", () => {
   it("按菜单 → 编辑 → 搜索的顺序逐层收起，最后返回 false", () => {
     const state = createDictPageState("zh-TW");

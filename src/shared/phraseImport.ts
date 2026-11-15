@@ -53,6 +53,9 @@ export async function importPhraseFile(
   }
   if (skipped > 0) {
     window.alert(t("settings.dict.importPartial", { added, updated, skipped, max: MAX_PHRASES_PER_VARIANT }));
+  } else {
+    // 成功时也给出新增 / 更新的确切数量，与另两端的导入结果提示一致。
+    window.alert(t("settings.dict.importDone", { added, updated }));
   }
   return patch;
 }

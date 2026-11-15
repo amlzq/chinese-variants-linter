@@ -198,7 +198,9 @@ async function replaceAllIssues(): Promise<void> {
     return;
   }
 
-  const changed = applyAllSuggestions(state.activeElement, state.activeIssues);
+  // 与产品规范一致：批量只接受高置信度项，中置信度必须逐条确认。
+  const safeIssues = state.activeIssues.filter((issue) => issue.confidence === "high");
+  const changed = applyAllSuggestions(state.activeElement, safeIssues);
   if (changed > 0) {
     hideSuggestionPopover();
     await detectActiveElement(true);

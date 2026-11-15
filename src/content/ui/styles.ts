@@ -813,6 +813,17 @@ export function ensureStyles(): void {
       color: var(--cvl-text-muted);
     }
 
+    /* 中置信度提示：批量接受不会覆盖这类项，需要逐条确认。 */
+    #${REVIEW_VIEW_ID} .cvl-review-badge {
+      margin-left: auto;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #b45309;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
     #${REVIEW_VIEW_ID} .cvl-review-card-context {
       padding: 10px 14px;
       margin: 0 0 12px;

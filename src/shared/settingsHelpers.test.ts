@@ -7,6 +7,7 @@ import {
   importPhrasesPatch,
   removeAllowPhrasePatch,
   removePhrasePatch,
+  togglePhrasePatch,
   updatePhrasePatch,
 } from "./settingsHelpers";
 import { MAX_PHRASES_PER_VARIANT } from "./phraseCsv";
@@ -106,6 +107,23 @@ describe("updatePhrasePatch", () => {
   it("空值返回空补丁", () => {
     const settings = createSettings({ userDictionary: { phrases: twPhrases } });
     expect(updatePhrasePatch(settings, "zh-TW", "a", "", "x")).toEqual({});
+  });
+});
+
+describe("togglePhrasePatch", () => {
+  it("只改动目标词组的启停状态，其余保持原样", () => {
+    const settings = createSettings({ userDictionary: { phrases: twPhrases } });
+    const phrases = togglePhrasePatch(settings, "zh-TW", "a", false).userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.find((p) => p.id === "a")?.enabled).toBe(false);
+    expect(phrases?.find((p) => p.id === "b")?.enabled).toBe(true);
+  });
+
+  it("重新启用写回 true", () => {
+    const settings = createSettings({
+      userDictionary: { phrases: { "zh-TW": [{ id: "a", from: "软件", to: "軟體", enabled: false }] } },
+    });
+    const phrases = togglePhrasePatch(settings, "zh-TW", "a", true).userDictionary?.phrases?.["zh-TW"];
+    expect(phrases?.[0].enabled).toBe(true);
   });
 });
 

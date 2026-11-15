@@ -615,6 +615,22 @@
   min-width: 0;
 }
 
+/* 词组行：开关 + 词条 + 操作用 space-between 排布，词条占据剩余空间。 */
+.cvl-settings-view .cvl-dict-phrase > .cvl-settings-rule-text {
+  flex: 1;
+}
+
+.cvl-settings-view .cvl-dict-toggle {
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* 停用的词组弱化显示，但仍保留可编辑 / 可删除。 */
+.cvl-settings-view .cvl-dict-phrase-off > .cvl-settings-rule-text {
+  opacity: 0.45;
+}
+
 .cvl-settings-view .cvl-settings-rule-variant {
   font-size: 11px;
   font-weight: 600;

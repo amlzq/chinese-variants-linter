@@ -14,6 +14,7 @@ import {
   addPhrasePatch,
   clearPhrasesPatch,
   removePhrasePatch,
+  togglePhrasePatch,
   updatePhrasePatch,
 } from "../../shared/settingsHelpers";
 import type { ExtensionSettings, ExtensionSettingsPatch, VariantCode } from "../../shared/types";
@@ -109,7 +110,8 @@ function getResultsMarkup(settings: ExtensionSettings, state: DictPageState): st
       return getEditRow(phrase.id, phrase.from, phrase.to);
     }
     return `
-      <div class="cvl-settings-rule-item" data-phrase-id="${escapeHtml(phrase.id)}">
+      <div class="cvl-settings-rule-item cvl-dict-phrase${phrase.enabled === false ? " cvl-dict-phrase-off" : ""}" data-phrase-id="${escapeHtml(phrase.id)}">
+        <input class="cvl-dict-toggle" type="checkbox" data-dict-action="togglePhrase" data-phrase-id="${escapeHtml(phrase.id)}" ${phrase.enabled === false ? "" : "checked"} aria-label="${t("settings.dict.toggle")}" title="${t("settings.dict.toggle")}" />
         <div class="cvl-settings-rule-text">
           <span class="cvl-settings-rule-from">${escapeHtml(phrase.from)}</span>
           <span class="cvl-settings-rule-arrow">→</span>
@@ -272,6 +274,17 @@ function bindResultsEvents(body: HTMLElement, ctx: DictPageContext): void {
         event.preventDefault();
         void save();
       }
+    });
+  });
+
+  results.querySelectorAll<HTMLInputElement>("[data-dict-action='togglePhrase']").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const id = input.dataset.phraseId;
+      const settings = ctx.getSettings();
+      if (!id || !settings) {
+        return;
+      }
+      await ctx.update(togglePhrasePatch(settings, ctx.getState().variant, id, input.checked));
     });
   });
 
